@@ -13,6 +13,7 @@
     <!-- <arg name="gui" value="false"/> -->
   </include>
 
+  <!-- Yellow -->
   <group ns="magnus">
     <include file="$(find imav_sim)/launch/spawn_mav.launch">
       <arg name="mav_name" value="magnus" />
@@ -35,9 +36,9 @@
     </node>
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="screen" args="0 0 6 0 5"/>
   </group>
-
-
- <group ns="vega">
+  
+  <!-- Orange -->
+  <group ns="vega">
     <include file="$(find imav_sim)/launch/spawn_mav.launch">
       <arg name="mav_name" value="vega" />
       <arg name="enable_logging" value="$(arg enable_logging)" />
@@ -60,7 +61,8 @@
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="screen" args="0 1 6 0 5"/>
   </group>
 
-   <group ns="icarus">
+  <!-- Red -->
+  <group ns="icarus">
     <include file="$(find imav_sim)/launch/spawn_mav.launch">
       <arg name="mav_name" value="icarus" />
       <arg name="enable_logging" value="$(arg enable_logging)" />

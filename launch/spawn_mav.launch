@@ -3,14 +3,14 @@
 <launch>
   <arg name="mav_name" default="firefly"/>
   <arg name="namespace" default="$(arg mav_name)"/>
-  <arg name="model" default="$(find imav_sim)/models/firefly_base.xacro"/>
+  <arg name="model" default="$(find imav_sim)/models/$(arg mav_name)_base.xacro"/>
   <arg name="tf_prefix" default="$(optenv ROS_NAMESPACE)"/>
   <arg name="x" default="0.0"/>
   <arg name="y" default="0.0"/>
   <arg name="z" default="0.1"/>
   <arg name="enable_logging" default="false"/>
   <arg name="enable_ground_truth" default="true"/>
-  <arg name="log_file" default="firefly"/>
+  <arg name="log_file" default="$(arg mav_name)"/>
   <arg name="wait_to_record_bag" default="false"/>
   <arg name="enable_mavlink_interface" default="false"/>
 
@@ -22,7 +22,7 @@
     enable_mavlink_interface:=$(arg enable_mavlink_interface)
     log_file:=$(arg log_file)
     wait_to_record_bag:=$(arg wait_to_record_bag)
-    mav_name:=firefly
+    mav_name:=$(arg mav_name)
     namespace:=$(arg namespace)"
   />
   <param name="tf_prefix" type="string" value="$(arg tf_prefix)" />
