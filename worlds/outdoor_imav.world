@@ -361,7 +361,7 @@
       <allow_auto_disable>1</allow_auto_disable>
       <pose frame=''>0.016514 0.567863 0 0 -0 0</pose>
     </model>
-    <model name='Blue_Package'>
+    <model name='Blue_Package_1'>
       <link name='link'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <inertial>
@@ -567,7 +567,7 @@
       <allow_auto_disable>1</allow_auto_disable>
       <pose frame=''>1.63607 -5.22522 0 0 -0 0</pose>
     </model>
-    <model name='Yellow_Package'>
+    <model name='Yellow_Package_1'>
       <link name='link'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <inertial>
@@ -1046,7 +1046,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='Blue_Package'>
+      <model name='Blue_Package_1'>
         <pose frame=''>95.326 34.9379 0.09902 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
@@ -1106,7 +1106,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='Yellow_Package'>
+      <model name='Yellow_Package_1'>
         <pose frame=''>30.7391 18.0334 0.14902 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
@@ -1126,7 +1126,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='grass_plane_10'>
+      <model name='grass_plane_1'>
         <pose frame=''>32.6667 87.2936 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
@@ -1136,7 +1136,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='grass_plane_11'>
+      <model name='grass_plane_2'>
         <pose frame=''>263.255 4.56789 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
@@ -1146,7 +1146,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='grass_plane_12'>
+      <model name='grass_plane_3'>
         <pose frame=''>32.8796 161.816 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
@@ -1156,7 +1156,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='grass_plane_5'>
+      <model name='grass_plane_4'>
         <pose frame=''>33.1924 7.33168 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
@@ -1166,7 +1166,7 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='grass_plane_9'>
+      <model name='grass_plane_5'>
         <pose frame=''>148.164 6.80567 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
@@ -1239,7 +1239,7 @@
         <projection_type>orthographic</projection_type>
       </camera>
     </gui>
-    <model name='grass_plane_5'>
+    <model name='grass_plane_4'>
       <static>1</static>
       <link name='link'>
         <collision name='collision'>
@@ -2785,7 +2785,7 @@
       </link>
       <pose frame=''>33.1924 7.33168 0 0 -0 0</pose>
     </model>
-    <model name='grass_plane_9'>
+    <model name='grass_plane_5'>
       <static>1</static>
       <link name='link'>
         <collision name='collision'>
@@ -4331,7 +4331,7 @@
       </link>
       <pose frame=''>148.164 6.80567 0 0 -0 0</pose>
     </model>
-    <model name='grass_plane_10'>
+    <model name='grass_plane_1'>
       <static>1</static>
       <link name='link'>
         <collision name='collision'>
@@ -5877,7 +5877,7 @@
       </link>
       <pose frame=''>32.6667 87.2936 0 0 -0 0</pose>
     </model>
-    <model name='grass_plane_11'>
+    <model name='grass_plane_2'>
       <static>1</static>
       <link name='link'>
         <collision name='collision'>
@@ -7423,7 +7423,7 @@
       </link>
       <pose frame=''>263.255 4.56789 0 0 -0 0</pose>
     </model>
-    <model name='grass_plane_12'>
+    <model name='grass_plane_3'>
       <static>1</static>
       <link name='link'>
         <collision name='collision'>
