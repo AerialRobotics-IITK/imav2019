@@ -14,7 +14,7 @@
   </include>
 
   <group ns="magnus">
-    <include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+    <include file="$(find imav_sim)/launch/spawn_mav.launch">
       <arg name="mav_name" value="magnus" />
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
@@ -38,7 +38,7 @@
 
 
  <group ns="vega">
-    <include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+    <include file="$(find imav_sim)/launch/spawn_mav.launch">
       <arg name="mav_name" value="vega" />
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
@@ -61,7 +61,7 @@
   </group>
 
    <group ns="icarus">
-    <include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+    <include file="$(find imav_sim)/launch/spawn_mav.launch">
       <arg name="mav_name" value="icarus" />
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
