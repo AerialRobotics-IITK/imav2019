@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>imav_detector</name>
+  <name>imav_optimizer</name>
   <version>0.0.0</version>
-  <description>The imav_detector package</description>
+  <description>The imav_optimizer package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

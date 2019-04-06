@@ -6,14 +6,38 @@ project(imav_trajectory_generator)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  catkin_simple
-)
+# ## is used, also find other catkin packages
+# find_package(catkin REQUIRED COMPONENTS
+#   geometry_msgs
+#   mav_msgs
+#   mavros_msgs
+#   nav_msgs
+#   rosbag
+#   roscpp
+#   rospy
+#   sensor_msgs
+#   std_msgs
+#   tf
+#   visualization_msgs
+# )
 
+find_package(catkin_simple REQUIRED)
+catkin_simple(ALL_DEPS_REQUIRED)
+
+set(CMAKE_MACOSX_RPATH 0)
+add_definitions(-std=c++11)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+# cs_add_library(mav_trajectory_generation_ros
+#   src/feasibility_analytic.cpp
+#   src/feasibility_base.cpp
+#   src/feasibility_recursive.cpp
+#   src/feasibility_sampling.cpp
+#   src/input_constraints.cpp
+#   src/ros_conversions.cpp
+#   src/ros_visualization.cpp
+# )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -68,7 +92,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   geometry_msgs#   mav_msgs#   mavros_msgs#   nav_msgs#   sensor_msgs#   std_msgs#   visualization_msgs
 # )
 
 ################################################
@@ -100,12 +124,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES imav_detector
-#  CATKIN_DEPENDS catkin_simple
-#  DEPENDS system_lib
-)
+# catkin_package(
+# #  INCLUDE_DIRS include
+# #  LIBRARIES imav_sim
+# #  CATKIN_DEPENDS geometry_msgs mav_msgs mavros_msgs nav_msgs rosbag roscpp rospy sensor_msgs std_msgs tf visualization_msgs
+# #  DEPENDS system_lib
+# )
 
 ###########
 ## Build ##
@@ -113,14 +137,39 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
+# include_directories(
+# # include
+#   ${catkin_INCLUDE_DIRS}
+# )
+
+cs_add_executable(magnus_trajectory_sampler_node
+  src/magnus_trajectory_sampler_node.cxx
 )
+# target_link_libraries(magnus_trajectory_sampler_node ${catkin_LIBRARIES})
+
+cs_add_executable(vega_trajectory_sampler_node
+  src/vega_trajectory_sampler_node.cxx
+)
+# target_link_libraries(vega_trajectory_sampler_node ${PROJECT_NAME})
+
+cs_add_executable(icarus_trajectory_sampler_node
+  src/icarus_trajectory_sampler_node.cxx
+)
+# target_link_libraries(icarus_trajectory_sampler_node ${PROJECT_NAME})
+
+cs_add_executable(time_evaluation_node
+  src/time_evaluation_node.cpp
+)
+# target_link_libraries(time_evaluation_node ${PROJECT_NAME})
+
+cs_add_executable(trajectory_node
+  src/trajectory_node.cxx
+)
+# target_link_libraries(trajectory_node ${PROJECT_NAME})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/imav_detector.cpp
+#   src/${PROJECT_NAME}/imav_sim.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -131,7 +180,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/imav_detector_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/imav_sim_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -188,10 +237,13 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_imav_detector.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_imav_sim.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+# cs_install()
+# cs_export()
+
