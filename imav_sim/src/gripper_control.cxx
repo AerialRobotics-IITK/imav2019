@@ -10,18 +10,15 @@
 
 using namespace std;
 
-geometry_msgs::Pose mav_pose, 
-                    red_package_0_pose, red_package_1_pose,
+nav_msgs::Odometry mav_odom_;
+geometry_msgs::Pose red_package_0_pose, red_package_1_pose,
                     yellow_package_0_pose, yellow_package_1_pose,
                     blue_package_0_pose, blue_package_1_pose;
 std_msgs::Bool gripper_status;
 
-
-
-
-void mav_cb(const geometry_msgs::Pose &msg)
+void mav_cb(const nav_msgs::Odometry &msg)
 {
-    mav_pose = msg;
+    mav_odom_ = msg;
 }
 
 void gripper_cb(const std_msgs::Bool &msg)
@@ -60,12 +57,12 @@ int min_index_(vector<float> vec_)
     return distance(begin(vec_), min_);
 }
 
-    int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     ros::init(argc, argv, "gripper_control");
     ros::NodeHandle nh;
 
-    ros::Subscriber mav_sub_ = nh.subscribe("ground_truth/pose", 100, mav_cb);
+    ros::Subscriber mav_sub_ = nh.subscribe("ground_truth/odometry", 100, mav_cb);
     ros::Subscriber obj_sub_ = nh.subscribe("/gazebo/model_states", 100, obj_cb);
     ros::Subscriber grip_status_sub_ = nh.subscribe("gripper_status", 100, gripper_cb);
 
@@ -83,12 +80,12 @@ int min_index_(vector<float> vec_)
     gripper_status.data=false;
     while (ros::ok())
     {
-        dist_list.push_back(dist_from_est_pose_(blue_package_0_pose, mav_pose));
-        dist_list.push_back(dist_from_est_pose_(blue_package_1_pose, mav_pose));
-        dist_list.push_back(dist_from_est_pose_(red_package_0_pose, mav_pose));
-        dist_list.push_back(dist_from_est_pose_(red_package_1_pose, mav_pose));
-        dist_list.push_back(dist_from_est_pose_(yellow_package_0_pose, mav_pose));
-        dist_list.push_back(dist_from_est_pose_(yellow_package_1_pose, mav_pose));
+        dist_list.push_back(dist_from_est_pose_(blue_package_0_pose, mav_odom_.pose.pose));
+        dist_list.push_back(dist_from_est_pose_(blue_package_1_pose, mav_odom_.pose.pose));
+        dist_list.push_back(dist_from_est_pose_(red_package_0_pose, mav_odom_.pose.pose));
+        dist_list.push_back(dist_from_est_pose_(red_package_1_pose, mav_odom_.pose.pose));
+        dist_list.push_back(dist_from_est_pose_(yellow_package_0_pose, mav_odom_.pose.pose));
+        dist_list.push_back(dist_from_est_pose_(yellow_package_1_pose, mav_odom_.pose.pose));
 
         if (min_index_(dist_list) == 0)
             package_name = "Blue_Package_0";
@@ -103,12 +100,14 @@ int min_index_(vector<float> vec_)
         else if (min_index_(dist_list) == 5)
             package_name = "Yellow_Package_1";
 
-        if (gripper_status.data)
+        if (gripper_status.data && dist_list.at(min_index_(dist_list))<0.5)
         {
             set_obj_state.request.model_state.model_name = package_name;
-            set_obj_state.request.model_state.pose.position = mav_pose.position;
-            set_obj_state.request.model_state.pose.position.z = mav_pose.position.z - 0.20;
-            set_obj_state.request.model_state.pose.orientation = mav_pose.orientation;
+            set_obj_state.request.model_state.pose.position = mav_odom_.pose.pose.position;
+            set_obj_state.request.model_state.pose.position.z = mav_odom_.pose.pose.position.z - 0.20;
+            set_obj_state.request.model_state.pose.orientation = mav_odom_.pose.pose.orientation;
+            set_obj_state.request.model_state.twist = mav_odom_.twist.twist;
+
             if (set_pose_client_.call(set_obj_state))
             {
                 ROS_INFO("Gripped %d", min_index_(dist_list));
