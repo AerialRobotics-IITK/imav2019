@@ -8,7 +8,17 @@ project(imav_optimizer)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  catkin_simple
+  geometry_msgs
+  mav_msgs
+  mavros_msgs
+  nav_msgs
+  rosbag
+  roscpp
+  rospy
+  sensor_msgs
+  std_msgs
+  tf
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -118,6 +128,9 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_executable(optimizer_node src/optimizer_node.cxx )
+target_link_libraries(optimizer_node
+${catkin_LIBRARIES} )
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/imav_detector.cpp

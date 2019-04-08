@@ -11,6 +11,8 @@
 #include <mav_trajectory_generation_ros/feasibility_analytic.h>
 #include <mav_trajectory_generation_ros/ros_conversions.h>
 
+int count= 0;
+
 int main(int argc, char **argv)
 {
 
@@ -63,7 +65,7 @@ int main(int argc, char **argv)
 
         std::vector<double> icarus_segment_times;
 
-        const double v_max = 5;
+        const double v_max = 10;
         const double a_max = 5;
         const double magic_fabian_constant = 6.5; // A tuning parameter.
         icarus_segment_times = estimateSegmentTimes(icarus_vertices, v_max, a_max);
@@ -99,7 +101,10 @@ int main(int argc, char **argv)
         mav_trajectory_generation::trajectoryToPolynomialTrajectoryMsg(icarus_trajectory, &icarus_msg);
         icarus_msg.header.stamp = ros::Time::now();
         icarus_msg.header.frame_id = "world";
+        if(count<10)
+        {
         polynomial_trajectory_pub_icarus.publish(icarus_msg);
+        }
 
         ros::spinOnce();
 
@@ -107,6 +112,7 @@ int main(int argc, char **argv)
 
         icarus_vertices.clear();
 
+        count++;
         sleep_Rate.sleep();
     }
     return 0;
