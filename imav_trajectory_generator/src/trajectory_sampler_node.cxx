@@ -35,11 +35,11 @@ TrajectorySamplerNode::TrajectorySamplerNode(const ros::NodeHandle &nh,
     command_pub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
         mav_msgs::default_topics::COMMAND_TRAJECTORY, 1);
     trajectory_sub_ = nh_.subscribe(
-        "icarus_path_segments", 10, &TrajectorySamplerNode::pathSegmentsCallback, this);
+        "path_segments", 10, &TrajectorySamplerNode::pathSegmentsCallback, this);
     stop_srv_ = nh_.advertiseService(
-        "icarus_stop_sampling", &TrajectorySamplerNode::stopSamplingCallback, this);
+        "stop_sampling", &TrajectorySamplerNode::stopSamplingCallback, this);
     position_hold_client_ =
-        nh_.serviceClient<std_srvs::Empty>("icarus_back_to_position_hold");
+        nh_.serviceClient<std_srvs::Empty>("back_to_position_hold");
 
     const bool oneshot = false;
     const bool autostart = false;
@@ -128,7 +128,7 @@ void TrajectorySamplerNode::commandTimerCallback(const ros::TimerEvent &)
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "icarus_trajectory_sampler_node");
+    ros::init(argc, argv, "trajectory_sampler_node");
     ros::NodeHandle nh("");
     ros::NodeHandle nh_private("~");
     TrajectorySamplerNode trajectory_sampler_node(nh, nh_private);

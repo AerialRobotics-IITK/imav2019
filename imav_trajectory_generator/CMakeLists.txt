@@ -142,20 +142,11 @@ add_definitions(-std=c++11)
 #   ${catkin_INCLUDE_DIRS}
 # )
 
-cs_add_executable(magnus_trajectory_sampler_node
-  src/magnus_trajectory_sampler_node.cxx
+cs_add_executable(trajectory_sampler_node
+  src/trajectory_sampler_node.cxx
 )
-# target_link_libraries(magnus_trajectory_sampler_node ${catkin_LIBRARIES})
+# target_link_libraries(trajectory_sampler_node ${catkin_LIBRARIES})
 
-cs_add_executable(vega_trajectory_sampler_node
-  src/vega_trajectory_sampler_node.cxx
-)
-# target_link_libraries(vega_trajectory_sampler_node ${PROJECT_NAME})
-
-cs_add_executable(icarus_trajectory_sampler_node
-  src/icarus_trajectory_sampler_node.cxx
-)
-# target_link_libraries(icarus_trajectory_sampler_node ${PROJECT_NAME})
 
 cs_add_executable(time_evaluation_node
   src/time_evaluation_node.cpp
@@ -167,6 +158,17 @@ cs_add_executable(trajectory_node
 )
 # target_link_libraries(trajectory_node ${PROJECT_NAME})
 
+cs_add_executable(magnus_trajectory_node
+  src/magnus_trajectory_node.cxx
+)
+
+cs_add_executable(vega_trajectory_node
+  src/vega_trajectory_node.cxx
+)
+
+cs_add_executable(icarus_trajectory_node
+  src/icarus_trajectory_node.cxx
+)
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/imav_sim.cpp
