@@ -1,0 +1,11 @@
+<launch>
+    <group ns="magnus">
+        <node pkg="imav_optimizer" type="optimizer_node" name="magnus_optimizer_node" clear_params="true" output="screen"/>
+    </group>
+    <group ns="vega">
+        <node pkg="imav_optimizer" type="optimizer_node" name="vega_optimizer_node" clear_params="true" output="screen"/>
+    </group>
+    <group ns="icarus">
+        <node pkg="imav_optimizer" type="optimizer_node" name="icarus_optimizer_node" clear_params="true" output="screen"/>
+    </group>
+</launch>
