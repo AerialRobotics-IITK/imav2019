@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
         mav_optimized.publish(package_name);
 
-       
+        dist_list.clear();
         ros::spinOnce();
         loop_rate.sleep();
     }
