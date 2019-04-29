@@ -2,6 +2,7 @@
 #include<nav_msgs/Odometry.h>
 #include<geometry_msgs/PoseStamped.h>
 #include<std_msgs/Bool.h>
+#include<imav_planner/task_info.h>
 
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/back/mpl_graph_fsm_check.hpp>
@@ -10,12 +11,30 @@
 #include <boost/msm/front/euml/common.hpp>
 #include <boost/msm/front/euml/operator.hpp>
 
-nav_msgs::Odometry mav_odom;
+nav_msgs::Odometry mav_pose_;
+imav_planner::task_info task_info_;
+std_msgs::Bool gripper_status_;
 
-void Magnus_Callback(const nav_msgs::Odometry& msg)
+void mav_pose_cb_(const nav_msgs::Odometry &msg)
 {
-    mav_odom = msg;
+    mav_pose_ = msg;
 }
+
+void task_info_cb_(const imav_planner::task_info &msg)
+{
+    task_info_ = msg;
+}
+
+void gripper_status_cb_(const std_msgs::Bool &msg)
+{
+    gripper_status_ = msg;
+}
+
+ros::NodeHandle nh;
+
+ros::Subscriber mav_pose_sub = nh.subscribe("odometry", 1, mav_pose_cb_);
+ros::Subscriber task_info_sub = nh.subscribe("task_info", 1, task_info_cb_);
+ros::Subscriber gripper_status_sub = nh.subscribe("gripper_status", 1,gripper_status_cb_ );
 
 namespace state_machine 
 {
@@ -161,7 +180,12 @@ namespace state_machine
         bool AtMailbox = false;
 
         // void start_printing(print const &) { std::cout << "start_printet" << std::endl; }
-        void TakeOff(CmdTakeOff const &) { std::cout << "Taking off" << std::endl; }
+        void TakeOff(CmdTakeOff const &) 
+        { 
+            
+            std::cout << "Taking off" << std::endl; 
+        }
+
         void TrajExec(CmdTrajectory const &) { std::cout << "Exploring" << std::endl; ExploreDone=true;}
         void GetPkg(CmdGetPkg const &) { std::cout << "Going to LZ" << std::endl; AtLZ=true;}
         void GotoDrop(CmdGotoDrop const &) { std::cout << "Going to mailbox" << std::endl; AtMailbox=true;}
