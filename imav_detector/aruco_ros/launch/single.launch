@@ -8,12 +8,12 @@
     <arg name="corner_refinement" default="LINES" /> <!-- NONE, HARRIS, LINES, SUBPIX -->
 
     <node name="input" type="input" pkg="aruco_ros" output="screen">
-        <!-- <remap from="colour_image" to="/camera/image_raw" /> -->
+        <remap from="colour_image" to="/usb_cam/image_raw" />
         <rosparam file="$(find aruco_ros)/cfg/input.yaml" />
     </node>
 
     <node pkg="aruco_ros" type="single" name="aruco_single">
-        <remap from="aruco_single/camera_info" to="/camera/camera_info" />
+        <remap from="aruco_single/camera_info" to="/usb_cam/camera_info" />
         <remap from="aruco_single/threshold_image" to="threshold_image" />
         <param name="image_is_rectified" value="True"/>
         <param name="marker_size"        value="$(arg markerSize)"/>
@@ -25,8 +25,8 @@
     </node>
 
     <node name="object_pos" type="object_pos" pkg="aruco_ros">
-        <!-- <remap from="odometry" to="/tfmini_odom" /> -->
-	<!-- <remap from="imu/data" to="/ironman/pilot/imu/data" /> -->
+        <remap from="odometry" to="/tfmini_odom" />
+	<remap from="imu/data" to="/ironman/pilot/imu/data" />
 	<remap from="object/pose" to="/object/pose" />
     </node>
 </launch>
