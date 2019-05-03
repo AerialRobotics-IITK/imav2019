@@ -2,7 +2,7 @@ aruco_ros
 =========
 
 Software package and ROS wrappers of the [Aruco][1] Augmented Reality marker detector library.
-
+<img align="center" src="ros_graph.png" />
 
 ### Features
 <img align="right" src="https://raw.github.com/pal-robotics/aruco_ros/master/aruco_ros/etc/marker_in_hand.jpg" />
