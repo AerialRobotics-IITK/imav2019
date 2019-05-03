@@ -1,0 +1,5 @@
+<launch>
+    <group ns="firefly">
+        <node name="planner" pkg="imav_planner" type="planner_test" output="screen" />
+    </group>
+</launch>
