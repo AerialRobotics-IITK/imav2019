@@ -19,7 +19,7 @@
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="firefly"/>
-      <arg name="y" value="-1"/>
+      <arg name="y" value="-2.0"/>
     </include>
      <node name="mav_nonlinear_mpc" pkg="mav_nonlinear_mpc" type="nonlinear_mpc_node" respawn="true" clear_params="true" output="log">
       <remap from="odometry" to="ground_truth/odometry" />
@@ -35,6 +35,7 @@
     </node>
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="log" args="0 0 6 0 5"/>
     <node name="gripper" pkg="imav_sim" type="gripper_control" output="log" />
+    <!-- <node name="planner" pkg="imav_planner" type="planner_test" output="screen" /> -->
   </group>
   
   <!-- Orange -->
@@ -44,7 +45,7 @@
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="firefly"/>
-      <arg name="y" value="-2"/>
+      <arg name="y" value="-1.0"/>
     </include>
      <node name="mav_nonlinear_mpc" pkg="mav_nonlinear_mpc" type="nonlinear_mpc_node" respawn="true" clear_params="true" output="log">
       <remap from="odometry" to="ground_truth/odometry" />

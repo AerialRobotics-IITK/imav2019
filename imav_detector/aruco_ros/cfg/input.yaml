@@ -1,0 +1,23 @@
+# yellow
+yellow/h_max: 40
+yellow/h_min: 20
+yellow/s_max: 255
+yellow/s_min: 35
+yellow/v_max: 255
+yellow/v_min: 100
+
+#red
+red/h_max: 20
+red/h_min: 0
+red/s_max: 255
+red/s_min: 35
+red/v_max: 255
+red/v_min: 100
+
+#blue
+blue/h_max: 80
+blue/h_min: 60
+blue/s_max: 255
+blue/s_min: 35
+blue/v_max: 255
+blue/v_min: 100
