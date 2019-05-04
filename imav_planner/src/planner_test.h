@@ -4,6 +4,7 @@
 #include<std_msgs/Bool.h>
 #include<imav_planner/task_info.h>
 #include<std_srvs/Empty.h>
+#include<std_msgs/UInt16.h>
 
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/back/mpl_graph_fsm_check.hpp>
@@ -15,7 +16,8 @@
 #define E 0.2
 
 nav_msgs::Odometry mav_pose_;
-imav_planner::task_info task_info_;
+// recombine these to one message once detector is working
+imav_planner::task_info home_info_, drop_info_;
 std_msgs::Bool gripper_status_;
 
 void mav_pose_cb_(const nav_msgs::Odometry &msg)
@@ -23,9 +25,14 @@ void mav_pose_cb_(const nav_msgs::Odometry &msg)
     mav_pose_ = msg;
 }
 
-void task_info_cb_(const imav_planner::task_info &msg)
+void home_info_cb_(const imav_planner::task_info &msg)
 {
-    task_info_ = msg;
+    home_info_ = msg;
+}
+
+void drop_info_cb_(const imav_planner::task_info &msg)
+{
+    drop_info_ = msg;
 }
 
 void gripper_status_cb_(const std_msgs::Bool &msg)
@@ -67,11 +74,15 @@ namespace state_machine
 
     struct CmdAscent
     {
-        ros::NodeHAndle nh;
+        ros::NodeHandle nh;
         CmdAscent(ros::NodeHandle nh_):nh(nh_){}
     };
 
-    struct CmdDrop{};
+    struct CmdDrop
+    {
+        ros::NodeHandle nh;
+        CmdDrop(ros::NodeHandle nh_):nh(nh_){}
+    };
 
     struct CmdLand
     {
@@ -79,7 +90,11 @@ namespace state_machine
         CmdLand(ros::NodeHandle nh_):nh(nh_){}
     };
 
-    struct CmdDropOver{};
+    struct CmdDropOver
+    {
+        ros::NodeHandle nh;
+        CmdDropOver(ros::NodeHandle nh_):nh(nh_){}
+    };
     
     struct CmdHover
     {
@@ -220,12 +235,27 @@ namespace state_machine
             ros::NodeHandle nh_ = cmd.nh;
             ros::ServiceClient takeoff_client_ = nh_.serviceClient<std_srvs::Empty>("takeoff");
             ros::Subscriber odom_sub = nh_.subscribe("ground_truth/odometry", 1, mav_pose_cb_);
-            while(mav_pose_.header.seq != 0){
-                ros::spinOnce();
+            ros::Publisher gripper_pub = nh_.advertise<std_msgs::UInt16>("servo", 1);
+            
+            std_msgs::UInt16 angle_msg;
+            // when package is loaded angle is 140
+            angle_msg.data = 140;
+            int t=0;
+            while(t++<10)
+            {
+                gripper_pub.publish(angle_msg);
             }
-            double start_height = mav_pose_.pose.pose.position.z;
+            std::cout << "Servo angle set to " << angle_msg.data << std::endl;
+
+            double start_height=0;
+            while(start_height == 0)
+            {
+                ros::spinOnce();
+                start_height = mav_pose_.pose.pose.position.z;
+            }
             double target_height = start_height + 1.0;
             // might need to relax target_height to account for noise
+
             std_srvs::Empty takeoff_msg;
             if (takeoff_client_.call(takeoff_msg))
             {
@@ -235,45 +265,64 @@ namespace state_machine
             {
                 ROS_ERROR("Failed to takeoff");
             }
-            while(mav_pose_.pose.pose.position.z < target_height){
+
+            while(mav_pose_.pose.pose.position.z < target_height)
+            {
                 ros::spinOnce();
             }
+
+            Ascending(CmdAscent(nh_));
+            PkgAttached = true;
+            return;
         }
 
         void TrajExec(CmdTrajectory const &) { std::cout << "Exploring" << std::endl; ExploreDone=true;}
 
         void GetPkg(CmdGetPkg const & cmd) 
         {
+            std::cout << "Going to LZ" << std::endl;
+
             ros::NodeHandle nh_ = cmd.nh;
-            ros::Subscriber task_info_sub = nh_.subscribe("task_info", 1000, task_info_cb_);
+            ros::Subscriber home_info_sub = nh_.subscribe("home_info", 1000, home_info_cb_);
             ros::Publisher command_pub = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 1000);
             geometry_msgs::PoseStamped command_msg;
-            while(task_info_.loc_type != "Home"){
+            home_info_.loc_type = "";
+            while(home_info_.loc_type != "Home")
+            {
                 ros::spinOnce();
             }
-            command_msg.header = task_info_.header;
-            command_msg.pose.position = task_info_.position;
-            int t = 0;
+            command_msg.header = home_info_.header;
+            command_msg.pose.position = home_info_.position;
+            int t = 0; 
             // without this loop the topic doesn't seem to catch the command message
-            while(t++<10){
+            while(t++<1000)
+            {
                 command_pub.publish(command_msg);
             }
+            return;
         }
 
         void GotoDrop(CmdGotoDrop const & cmd) 
         { 
+            std::cout << "Going to Mailbox" << std::endl;
+
             ros::NodeHandle nh_ = cmd.nh;
-            ros::Subscriber task_info_sub = nh_.subscribe("task_info", 1000, task_info_cb_);
+            ros::Subscriber drop_info_sub = nh_.subscribe("drop_info", 1000, drop_info_cb_);
             ros::Publisher command_pub = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 1000);
+            
             geometry_msgs::PoseStamped command_msg;
-            while(task_info_.loc_type != "Drop"){
+            drop_info_.loc_type = "";
+            while(drop_info_.loc_type != "Drop")
+            {
                 ros::spinOnce();
             }
-            command_msg.header = task_info_.header;
-            command_msg.pose.position = task_info_.position;
+            command_msg.header = drop_info_.header;
+            command_msg.pose.position = drop_info_.position;
+            
             int t = 0;
             // without this loop the topic doesn't seem to catch the command message
-            while(t++<10){
+            while(t++<1000)
+            {
                 command_pub.publish(command_msg);
             }
             return;
@@ -281,14 +330,18 @@ namespace state_machine
 
         void Ascending(CmdAscent const & cmd) 
         { 
+            std::cout << "Ascending" << std::endl;
+
             ros::NodeHandle nh_ = cmd.nh;
             // parametrize as hover height
             double target_height = 4.0;
             double curr_x, curr_y, curr_z=0;
             bool AscentDone = false;
+            
             ros::Rate loopRate(10);
             ros::Subscriber mav_pose_sub = nh_.subscribe("ground_truth/odometry", 1, mav_pose_cb_);
             ros::Publisher command_pub = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 1);
+            
             geometry_msgs::PoseStamped command_msg;
             while(curr_z==0)
             {
@@ -302,6 +355,7 @@ namespace state_machine
             command_msg.pose.position.x = mav_pose_.pose.pose.position.x;
             command_msg.pose.position.y = mav_pose_.pose.pose.position.y;
             command_msg.pose.position.z = target_height;
+            
             int t=0;
             while(!AscentDone)
             {
@@ -316,11 +370,34 @@ namespace state_machine
             return;
         }
 
-        void Dropping(CmdDrop const &) { std::cout << "Dropping" << std::endl; PkgAttached = false;}
+        void Dropping(CmdDrop const & cmd)
+        { 
+            std::cout << "Dropping Package" << std::endl;
+
+            ros::NodeHandle nh_ = cmd.nh;
+            ros::Publisher gripper_pub = nh_.advertise<std_msgs::UInt16>("servo", 1);
+            std_msgs::UInt16 angle_msg;
+            angle_msg.data = 40;
+            int t=0;
+            while(t++<10)
+            {
+                gripper_pub.publish(angle_msg);
+            }
+            std::cout << "Servo angle set to " << angle_msg.data << std::endl;
+            PkgAttached = false;
+        }
+
+        void Hovering(CmdHover const &) 
+        { 
+            std::cout << "Hovering" << std::endl; 
+            ros::Rate loopRate(0.2);
+            loopRate.sleep();
+        }
         
-        void Hovering(CmdHover const &) { std::cout << "Hovering" << std::endl; }
-        
-        void Landing(CmdLand const &) { 
+        void Landing(CmdLand const & cmd) 
+        { 
+            std::cout << "Landing" << std::endl;
+
             ros::NodeHandle nh_ = cmd.nh;
             // parametrize as land height
             double target_height = 0.08;
@@ -345,7 +422,8 @@ namespace state_machine
             int t=0;
             while(!LandingDone)
             {
-                if(t++<10){
+                if(t++<10)
+                {
                     command_pub.publish(command_msg);
                 }
                 ros::spinOnce();
@@ -359,9 +437,11 @@ namespace state_machine
         
         void Descending(CmdDescent const & cmd) 
         { 
+            std::cout << "Descending" << std::endl;
+
             ros::NodeHandle nh_ = cmd.nh;
             // parametrize as drop start height
-            double target_height = 1.0;
+            double target_height = 0.3;
             double curr_x, curr_y, curr_z=0;
             bool DescentDone = false;
             ros::Rate loopRate(10);
@@ -392,13 +472,28 @@ namespace state_machine
                 DescentDone = (curr_z > target_height) ? false : true;
                 loopRate.sleep();
             }
+
             return;      
         }
         
-        void DropOver(CmdDropOver const &) { std::cout << "Dropped Pkg" << std::endl; }
-        
+        void DropOver(CmdDropOver const & cmd) 
+        {
+            std::cout << "Package Dropped" << std::endl;
 
-        bool isAtLoc(ros::NodeHandle nh)
+            ros::NodeHandle nh_ = cmd.nh;
+            ros::Publisher gripper_pub = nh_.advertise<std_msgs::UInt16>("servo", 1);
+            std_msgs::UInt16 angle_msg;
+            angle_msg.data = 90;
+            int t=0;
+            while(t++<10)
+            {
+                gripper_pub.publish(angle_msg);
+            }
+            std::cout << "Servo angle set to " << angle_msg.data << std::endl;
+            PkgAttached = false;
+        }
+
+        bool isAtLZ(ros::NodeHandle nh)
         {
             ros::Subscriber mav_pose_sub = nh.subscribe("ground_truth/odometry", 1, mav_pose_cb_);
             ros::Rate loopRate(10);
@@ -414,9 +509,42 @@ namespace state_machine
                 curr_pos[1] = mav_pose_.pose.pose.position.y;
                 curr_pos[2] = mav_pose_.pose.pose.position.z;
 
-                target_pos[0] = task_info_.position.x;
-                target_pos[1] = task_info_.position.y;
-                target_pos[2] = task_info_.position.z;
+                target_pos[0] = home_info_.position.x;
+                target_pos[1] = home_info_.position.y;
+                target_pos[2] = home_info_.position.z;
+
+                for(int i=0; i<3; i++)
+                {
+                    dist += (curr_pos[i] - target_pos[i])*(curr_pos[i] - target_pos[i]);
+                }
+                
+                AtLoc = (dist > E*E) ? false : true;
+                loopRate.sleep();
+            }
+
+            AtLZ=AtLoc;
+            return AtLoc;
+        }
+
+        bool isAtMB(ros::NodeHandle nh)
+        {
+            ros::Subscriber mav_pose_sub = nh.subscribe("ground_truth/odometry", 1, mav_pose_cb_);
+            ros::Rate loopRate(10);
+            double curr_pos[3], target_pos[3];
+            bool AtLoc = false;
+
+            while(!AtLoc)
+            {
+                ros::spinOnce();
+                double dist=0;
+
+                curr_pos[0] = mav_pose_.pose.pose.position.x;
+                curr_pos[1] = mav_pose_.pose.pose.position.y;
+                curr_pos[2] = mav_pose_.pose.pose.position.z;
+
+                target_pos[0] = drop_info_.position.x;
+                target_pos[1] = drop_info_.position.y;
+                target_pos[2] = drop_info_.position.z;
 
                 for(int i=0; i<3; i++)
                 {
@@ -427,22 +555,13 @@ namespace state_machine
                 loopRate.sleep();
             }
             
-            if(task_info_.loc_type=="Home")
-            {
-                AtLZ = AtLoc;
-            }
-            else if(task_info_.loc_type=="Drop")
-            {
-                AtMailbox = AtLoc;
-            }
-
+            AtMailbox=AtLoc;
             return AtLoc;
         }
 
         bool ReachedLZ(CmdHover const & cmd)
         {
-    
-            if(isAtLoc(cmd.nh))
+            if(isAtLZ(cmd.nh))
             {
                 std::cout << "Reached LZ" << std::endl;
             }
@@ -452,7 +571,7 @@ namespace state_machine
 
         bool ReachedMailbox(CmdHover const & cmd)
         {
-            if(isAtLoc(cmd.nh))
+            if(isAtMB(cmd.nh))
             {
                 std::cout << "Reached Mailbox" << std::endl;
             }
@@ -462,11 +581,13 @@ namespace state_machine
 
         template<class Event>
         bool NoPkg(Event const &){
-            if(PkgAttached){
+            if(PkgAttached)
+            {
                 std::cout << "Pkg is attached" << std::endl;
                 return false;
             }
-            else{
+            else
+            {
                 std::cout << "Pkg is not attached" << std::endl;
                 return true;
             }
@@ -474,33 +595,39 @@ namespace state_machine
 
         template<class Event>
         bool HasPkg(Event const &){
-            if(PkgAttached){
+            if(PkgAttached)
+            {
                 std::cout << "Pkg is attached" << std::endl;
                 return true;
             }
-            else{
+            else
+            {
                 std::cout << "Pkg is not attached" << std::endl;
                 return false;
             }
         }
 
         bool StartExplore(CmdTrajectory const &){
-            if(!ExploreDone){
+            if(!ExploreDone)
+            {
                 std::cout << "Exploration not finished" << std::endl;
                 return true;
             }
-            else{
+            else
+            {
                 std::cout << "Exploration finished" << std::endl;
                 return false;
             }
         }      
             
         bool FinExplore(CmdHover const &){
-            if(!ExploreDone){
+            if(!ExploreDone)
+            {
                 std::cout << "Exploration not finished" << std::endl;
                 return false;
             }
-            else{
+            else
+            {
                 std::cout << "Exploration finished" << std::endl;
                 return true;
             }
