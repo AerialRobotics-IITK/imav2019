@@ -8,13 +8,13 @@
 #define WHITE (255,255,255)
 #define BLACK (0,0,0)
 
-cv::Mat img,maskHSV,hsv, r_maskHSV, b_maskHSV, y_maskHSV, r_edges, y_edges, b_edges;
+cv::Mat img, maskHSV, hsv;
+cv::Mat r_maskHSV, b_maskHSV, y_maskHSV
+cv::Mat r_edges, y_edges, b_edges;
 cv::Mat y_blurred, y_closed, y_morphed;
 cv::Mat r_blurred, r_closed, r_morphed;
 cv::Mat b_blurred, b_closed, b_morphed;
-std::vector<std::vector<cv::Point> > r_contours, y_contours, b_contours;
-std::vector<cv::Vec4i> r_hier, y_hier, b_hier;
-double r_area, y_area, b_area, m_area;
+double r_area, y_area, b_area;
 
 int y_h_min, y_h_max, y_s_min , y_s_max , y_v_min, y_v_max ;
 int r_h_min, r_h_max, r_s_min , r_s_max , r_v_min, r_v_max ;
@@ -31,7 +31,7 @@ public:
   ImageConverter()
     : it_(nh_)
   {
-    // Subscrive to input video feed and publish output video feed
+    // Subscribe to input video feed and publish output video feed
     image_sub_ = it_.subscribe("colour_image", 1,
       &ImageConverter::imageCb, this);
     image_pub_ = it_.advertise("threshold_image", 1);
@@ -62,8 +62,6 @@ public:
     nh_.getParam("input/blue/s_min", b_s_min);
     nh_.getParam("input/blue/v_max", b_v_max);
     nh_.getParam("input/blue/v_min", b_v_min);
-
-    nh_.getParam("input/max_noise_area",m_area);
 
     r_area = 0; y_area = 0; b_area = 0;
 
@@ -101,12 +99,10 @@ public:
     {
       for(int j=0; j<y_morphed.cols;j++)
       {
-        // std::cout<<y_morphed.at<uchar>(i,j)<<std::endl;
         if(y_morphed.at<uchar>(i,j) != 0)
         {
           y_area++;
         }
-        // std::cout<<y_area<<std::endl;
       }
     }
 
@@ -117,7 +113,8 @@ public:
         if(b_morphed.at<uchar>(i,j) != 0)
         {
           b_area++;
-        }      }
+        }      
+      }
     }
 
     for(int i=0; i<r_morphed.rows; i++)
@@ -127,42 +124,9 @@ public:
         if(r_morphed.at<uchar>(i,j) != 0)
         {
           r_area++;
-        }      }
+        }
+      }
     }
-
-    // cv::Canny(r_maskHSV, r_edges, 100, 100*2, 3);
-    // cv::Canny(b_maskHSV, b_edges, 100, 100*2, 3);
-    // cv::Canny(y_maskHSV, y_edges, 100, 100*2, 3);
-
-    // cv::findContours(r_edges, r_contours, r_hier, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0,0));    
-    // cv::findContours(b_edges, b_contours, b_hier, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0,0));
-    // cv::findContours(y_edges, y_contours, y_hier, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0,0));
-
-    // for(int i=0; i<r_contours.size(); i++)
-    // {
-    //   if(cv::contourArea(r_contours[i])>m_area)
-    //   {
-    //     r_area += cv::contourArea(r_contours[i]);
-    //   }
-    // }
-
-    // for(int i=0; i<y_contours.size(); i++)
-    // {
-    //   if(cv::contourArea(y_contours[i])>m_area)
-    //   {
-    //     y_area += cv::contourArea(y_contours[i]);
-    //   }
-    // }
-
-    // for(int i=0; i<b_contours.size(); i++)
-    // {
-    //   if(cv::contourArea(b_contours[i])>m_area)
-    //   {
-    //     b_area += cv::contourArea(b_contours[i]);
-    //   }
-    // }
-
-    // std::cout << r_area << " " << y_area << " " << b_area << std::endl;
     
     if(r_area>b_area)
     {
@@ -187,7 +151,6 @@ public:
       }
     }
     
-
     cv::cvtColor(maskHSV,img,cv::COLOR_GRAY2BGR);
     cv_bridge::CvImage in_msg;
     in_msg.header.stamp = ros::Time::now();

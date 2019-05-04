@@ -21,6 +21,3 @@ blue/s_max: 255
 blue/s_min: 35
 blue/v_max: 255
 blue/v_min: 100
-
-# max area counted as noise
-max_noise_area: 0
