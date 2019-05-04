@@ -9,7 +9,7 @@
 #define BLACK (0,0,0)
 
 cv::Mat img, maskHSV, hsv;
-cv::Mat r_maskHSV, b_maskHSV, y_maskHSV
+cv::Mat r_maskHSV, b_maskHSV, y_maskHSV;
 cv::Mat r_edges, y_edges, b_edges;
 cv::Mat y_blurred, y_closed, y_morphed;
 cv::Mat r_blurred, r_closed, r_morphed;
@@ -94,6 +94,7 @@ public:
     cv::morphologyEx(y_closed, y_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
     cv::morphologyEx(r_closed, r_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
     cv::morphologyEx(b_closed, b_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
+    std::cout << "pixel" << y_morphed.at<uchar>(0, 0) << std::endl;
 
     for(int i=0; i<y_morphed.rows; i++)
     {
