@@ -9,7 +9,7 @@
 #define BLACK (0,0,0)
 
 cv::Mat img, maskHSV, hsv;
-cv::Mat r_maskHSV, b_maskHSV, y_maskHSV
+cv::Mat r_maskHSV, b_maskHSV, y_maskHSV;
 cv::Mat r_edges, y_edges, b_edges;
 cv::Mat y_blurred, y_closed, y_morphed;
 cv::Mat r_blurred, r_closed, r_morphed;
@@ -80,76 +80,14 @@ public:
     cv::cvtColor(img,hsv,CV_BGR2HSV);
 
     cv::inRange(hsv,cv::Scalar(r_h_min,r_s_min,r_v_min),cv::Scalar(r_h_max,r_s_max,r_v_max),r_maskHSV);
-    cv::inRange(hsv,cv::Scalar(b_h_min,b_s_min,b_v_min),cv::Scalar(b_h_max,b_s_max,b_v_max),b_maskHSV);
-    cv::inRange(hsv,cv::Scalar(y_h_min,y_s_min,y_v_min),cv::Scalar(y_h_max,y_s_max,y_v_max),y_maskHSV);
     
-    cv::GaussianBlur(y_maskHSV, y_blurred, cv::Size(9,9), 0, 0);
     cv::GaussianBlur(r_maskHSV, r_blurred, cv::Size(9,9), 0, 0);
-    cv::GaussianBlur(b_maskHSV, b_blurred, cv::Size(9,9), 0, 0);
-
-    cv::morphologyEx(y_blurred, y_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(r_blurred, r_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(b_blurred, b_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-
-    cv::morphologyEx(y_closed, y_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(r_closed, r_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(b_closed, b_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-
-    for(int i=0; i<y_morphed.rows; i++)
-    {
-      for(int j=0; j<y_morphed.cols;j++)
-      {
-        if(y_morphed.at<uchar>(i,j) != 0)
-        {
-          y_area++;
-        }
-      }
-    }
-
-    for(int i=0; i<b_morphed.rows; i++)
-    {
-      for(int j=0; j<b_morphed.cols;j++)
-      {
-        if(b_morphed.at<uchar>(i,j) != 0)
-        {
-          b_area++;
-        }      
-      }
-    }
-
-    for(int i=0; i<r_morphed.rows; i++)
-    {
-      for(int j=0; j<r_morphed.cols;j++)
-      {
-        if(r_morphed.at<uchar>(i,j) != 0)
-        {
-          r_area++;
-        }
-      }
-    }
     
-    if(r_area>b_area)
-    {
-      if(r_area>y_area)
-      {
+    cv::morphologyEx(r_blurred, r_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
+    cv::morphologyEx(r_closed, r_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
+    
+
         maskHSV = r_morphed;
-      }
-      else
-      {
-        maskHSV = y_morphed;
-      }
-    }
-    else
-    {
-      if(b_area>y_area)
-      {
-        maskHSV = b_morphed;
-      }
-      else
-      {
-        maskHSV = y_morphed;
-      }
-    }
     
     cv::cvtColor(maskHSV,img,cv::COLOR_GRAY2BGR);
     cv_bridge::CvImage in_msg;
@@ -157,6 +95,7 @@ public:
     in_msg.encoding = sensor_msgs::image_encodings::BGR8;
     in_msg.image = img;
     image_pub_.publish(in_msg.toImageMsg());
+    //cout<<r_h_max<<'\t'<<r_s_max<<'\t'<<r_v_max<<'\t'<<endl;
   }
 };
 

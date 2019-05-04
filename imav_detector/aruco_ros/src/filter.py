@@ -11,17 +11,21 @@ arr_y = []
 arr_z = []
 arr_yaw = []
 window_size=10
-count=0
+
 def tag_detect_node():
 
     global aruco_filtered_pose_pub
-    rospy.init_node('aruco_filter', anonymous=True)
-    aruco_filtered_pose_pub = rospy.Publisher("/filter/pose", PoseStamped, queue_size=10)
-    aruco_tag_sub = rospy.Subscriber("/object/pose",PoseStamped, tag_detection_cb)
+    rospy.init_node('aruco_ros', anonymous=True)
+    aruco_filtered_pose_pub = rospy.Publisher("filter/pose", PoseStamped, queue_size=10)
+    aruco_tag_sub = rospy.Subscriber("object/pose",PoseStamped, tag_detection_cb)
+
     rospy.spin()
 
 def tag_detection_cb(msg):
-    global count
+    translation_x=rospy.get_param('input/translation/x')
+    translation_y=rospy.get_param('input/translation/y')
+    translation_z=rospy.get_param('input/translation/z')
+
     pos_x = msg.pose.position.x
     pos_y = msg.pose.position.y
     pos_z = msg.pose.position.z
@@ -34,11 +38,6 @@ def tag_detection_cb(msg):
     angles = tf.transformations.euler_from_quaternion([msg.pose.orientation.x,msg.pose.orientation.y,msg.pose.orientation.z,msg.pose.orientation.w], axes='sxyz')
     yaw = angles[2]
 
-    #print(yaw)
-    # print('Before')
-    # print(arr_x)
-    # print(arr_y)
-    # print(arr_z)
 
     if len(arr_x)<window_size:
         arr_x.append(pos_x)
@@ -62,24 +61,15 @@ def tag_detection_cb(msg):
         filtered = PoseStamped()
         filtered.header.stamp = rospy.Time.now()
         filtered.header.frame_id = "home"
-        filtered.pose.position.x = median(arr_x)
-        filtered.pose.position.y = median(arr_y)
-        filtered.pose.position.z = median(arr_z)-0.1
+        filtered.pose.position.x = median(arr_x)+translation_x
+        filtered.pose.position.y = median(arr_y)+translation_y
+        filtered.pose.position.z = median(arr_z)-0.01
         filtered.pose.orientation.x = x
         filtered.pose.orientation.y = y
         filtered.pose.orientation.z = z
         filtered.pose.orientation.w = w
         aruco_filtered_pose_pub.publish(filtered)
-        count=count+1
-        # print('Median')
-        # print(filtered.pose.position.x)
-        # print(filtered.pose.position.y)
-        # print(filtered.pose.position.z)
-    # print('After')
-    # print(arr_x)
-    # print(arr_y)
-    # print(arr_z)
-    #print('\n')
+
 
 
 

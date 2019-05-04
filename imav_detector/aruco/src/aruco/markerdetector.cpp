@@ -55,7 +55,7 @@ namespace aruco
     markerIdDetector_ptrfunc=aruco::FiducidalMarkers::detect;
     pyrdown_level=0; // no image reduction
     //_minSize=0.04;
-    _minSize=0.025;
+    _minSize=0.015;
     _maxSize=0.5;
   }
   /************************************
