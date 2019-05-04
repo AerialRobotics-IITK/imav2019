@@ -316,13 +316,22 @@ namespace state_machine
                     }
                 }
             }
-            
+
             drop_info_.loc_type = "";
             while (drop_info_.loc_type != "Drop")
             {
                 ros::spinOnce();
-                if(mav_pose_.pose.pose.position.x < 0.05 && mav_pose_.pose.pose.position.y < 0.05)
+                if(mav_pose_.pose.pose.position.x < 0.5 && mav_pose_.pose.pose.position.y < 0.5)
                 {
+                    while (mode_set_)
+                    {
+                        ros::spinOnce();
+                        if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
+                        {
+                            std::cout << "  Offboard enabled" << std::endl;
+                            mode_set_ = false;
+                        }
+                    }
                     ExploreDone = true;
                     return;
                 }
@@ -360,10 +369,21 @@ namespace state_machine
                 }
             }
 
-            while(mav_pose_.pose.pose.position.x > 0.05 || mav_pose_.pose.pose.position.y > 0.05)
+            while(mav_pose_.pose.pose.position.x > 0.5 || mav_pose_.pose.pose.position.y > 0.5)
             {
                 ros::spinOnce();
             }
+
+            while (mode_set_)
+            {
+                ros::spinOnce();
+                if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
+                {
+                    std::cout << "  Offboard enabled" << std::endl;
+                    mode_set_ = false;
+                }
+            }
+
             ExploreDone = true;
             return;
         } 
