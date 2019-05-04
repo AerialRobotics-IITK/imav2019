@@ -85,6 +85,35 @@
     </node>
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="log" args="0 -1 6 0 5"/>
     <node name="gripper" pkg="imav_sim" type="gripper_control" output="log" />
+     
+    <node name="input" type="input" pkg="aruco_ros">
+        <remap from="colour_image" to="nadir_cam/image_raw" />
+    </node>  
+
+    <node pkg="aruco_ros" type="single" name="aruco_single">
+        <remap from="aruco_single/camera_info" to="nadir_cam/camera_info" />
+        <remap from="aruco_single/threshold_image" to="threshold_image" />
+        <param name="image_is_rectified" value="True"/>
+        <param name="marker_size"        value="0.1"/>
+        <param name="marker_id"          value="582"/>
+        <param name="reference_frame"    value=" "/>   
+        <param name="camera_frame"       value="stereo_gazebo"/>
+        <param name="marker_frame"       value="aruco_marker_frame" />
+        <param name="corner_refinement"  value="LINES" />
+    </node>
+
+    <node name="object_pos" type="object_pos" pkg="aruco_ros">
+        <remap from="odometry" to="ground_truth/pose" />
+        <remap from="imu/data" to="imu" />
+        <remap from="aruco_single/pose" to="aruco_single/pose" />
+        <remap from="object/pose" to="object/pose" />
+    </node>
+
+    <node pkg="aruco_ros" type="filter.py" name="image_filter" >
+        <remap from="command" to="filter/pose" />
+        <remap from="object/pose" to="object/pose" />
+    </node>
+
   </group>
 
 </launch>
