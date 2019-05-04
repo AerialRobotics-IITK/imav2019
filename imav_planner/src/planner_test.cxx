@@ -13,42 +13,51 @@ int main(int argc, char **argv)
    
     ros::Rate loopRate(0.2);
 
-    machine.start();
-    machine.process_event(state_machine::CmdTakeOff(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdHover(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdAscent(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdTrajectory()); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdHover(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdGetPkg(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdHover(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdDescent(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdLand(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdTakeOff(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdHover(nh)); state_machine::curr_state(machine);
-    // machine.process_event(state_machine::CmdAscent(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdGotoDrop(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdHover(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdDescent(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdDrop(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdDropOver(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdAscent(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdGetPkg(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdHover(nh));state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdDescent(nh)); state_machine::curr_state(machine);
-    loopRate.sleep();
-    machine.process_event(state_machine::CmdLand(nh)); state_machine::curr_state(machine);
-    std::cout<<"End Mission"<<std::endl;
-    machine.stop();
-    // machine_on = false;
-// }
-return 0;
+        machine.start();        machine.process_event(state_machine::CmdTakeOff(nh));       state_machine::curr_state(machine);
+
+    /*  
+        
+        // package pick test
+
+        loopRate.sleep();       machine.process_event(state_machine::CmdGetPkg(nh));        state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdHover(nh));         state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdDescent(nh));       state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdLand(nh));          state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdTakeOff(nh));       state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdHover(nh));         state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdAscent(nh));        state_machine::curr_state(machine);     
+                                                                                                                            
+                                                                                                                                    */
+    
+    /*
+    
+        // package drop test
+
+        loopRate.sleep();       machine.process_event(state_machine::CmdGotoDrop(nh));      state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdHover(nh));         state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdDescent(nh));       state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdDrop(nh));          state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdDropOver(nh));      state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdAscent(nh));        state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdGetPkg(nh));        state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdHover(nh));         state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdDescent(nh));       state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdLand(nh));          state_machine::curr_state(machine);
+                                                                                                                            
+                                                                                                                                    */
+
+    // /*
+    
+        // mission test
+        
+        loopRate.sleep();       machine.process_event(state_machine::CmdTrajectory(nh));    state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdHover(nh));         state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdDescent(nh));       state_machine::curr_state(machine);
+        loopRate.sleep();       machine.process_event(state_machine::CmdLand(nh));          state_machine::curr_state(machine);
+                                                                                                                        
+                                                                                                                                    // */
+
+        machine.stop();
+    
+    return 0;
 }

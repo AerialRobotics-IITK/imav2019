@@ -5,6 +5,8 @@
 #include<imav_planner/task_info.h>
 #include<std_srvs/Empty.h>
 #include<std_msgs/UInt16.h>
+#include <mavros_msgs/SetMode.h>
+#include <mavros_msgs/State.h>
 
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/back/mpl_graph_fsm_check.hpp>
@@ -19,6 +21,8 @@ nav_msgs::Odometry mav_pose_;
 // recombine these to one message once detector is working
 imav_planner::task_info home_info_, drop_info_;
 std_msgs::Bool gripper_status_;
+std::string mode_;
+
 
 void mav_pose_cb_(const nav_msgs::Odometry &msg)
 {
@@ -40,6 +44,11 @@ void gripper_status_cb_(const std_msgs::Bool &msg)
     gripper_status_ = msg;
 }
 
+void state_cb_(const mavros_msgs::State::ConstPtr &msg)
+{
+    mode_ = msg->mode;
+}
+
 namespace state_machine 
 {
 
@@ -52,7 +61,11 @@ namespace state_machine
         CmdTakeOff(ros::NodeHandle nh_):nh(nh_){}
     };
 
-    struct CmdTrajectory{};
+    struct CmdTrajectory
+    {
+        ros::NodeHandle nh;
+        CmdTrajectory(ros::NodeHandle nh_) : nh(nh_) {}
+    };
 
     struct CmdGetPkg
     {
@@ -276,7 +289,84 @@ namespace state_machine
             return;
         }
 
-        void TrajExec(CmdTrajectory const &) { std::cout << "Exploring" << std::endl; ExploreDone=true;}
+        void TrajExec(CmdTrajectory const & cmd) 
+        {   
+            std::cout << "Exploring" << std::endl; 
+            
+            ros::NodeHandle nh_ = cmd.nh;
+            ros::Subscriber state_sub_ = nh_.subscribe("pilot/state", 100, state_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("ground_truth/odometry", 100, mav_pose_cb_);
+            ros::ServiceClient set_mode_client = nh_.serviceClient<mavros_msgs::SetMode>("pilot/set_mode");
+            ros::Subscriber drop_sub_ = nh_.subscribe("drop_info", 100, drop_info_cb_);
+
+            mavros_msgs::SetMode mission_set_mode, offb_set_mode;
+            offb_set_mode.request.custom_mode = "OFFBOARD";
+            mission_set_mode.request.custom_mode = "AUTO.MISSION";
+            bool mode_set_= false;
+
+            while (ros::ok()&&(!mode_set_))
+            {
+                ros::spinOnce();
+                if(mode_=="OFFBOARD")
+                {
+                    if (set_mode_client.call(mission_set_mode) && mission_set_mode.response.mode_sent)
+                    {
+                        std::cout << "  Mission enabled"<<std::endl;
+                        mode_set_=true;
+                    }
+                }
+            }
+            
+            drop_info_.loc_type = "";
+            while (drop_info_.loc_type != "Drop")
+            {
+                ros::spinOnce();
+                if(mav_pose_.pose.pose.position.x < 0.05 && mav_pose_.pose.pose.position.y < 0.05)
+                {
+                    ExploreDone = true;
+                    return;
+                }
+            }
+
+            while (mode_set_)
+            {
+                ros::spinOnce();
+                if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
+                {
+                    std::cout << "  Offboard enabled" << std::endl;
+                    mode_set_ = false;
+                }
+            }
+
+            GotoDrop(CmdGotoDrop(nh_));
+            if(ReachedMailbox(CmdHover(nh_)))
+            {
+                Descending(CmdDescent(nh_));
+                Dropping(CmdDrop(nh_));
+                DropOver(CmdDropOver(nh_));
+                Ascending(CmdAscent(nh_));
+            }
+
+            while (ros::ok() && (!mode_set_))
+            {
+                ros::spinOnce();
+                if (mode_ == "OFFBOARD")
+                {
+                    if (set_mode_client.call(mission_set_mode) && mission_set_mode.response.mode_sent)
+                    {
+                        std::cout << "  Mission enabled" << std::endl;
+                        mode_set_ = true;
+                    }
+                }
+            }
+
+            while(mav_pose_.pose.pose.position.x > 0.05 || mav_pose_.pose.pose.position.y > 0.05)
+            {
+                ros::spinOnce();
+            }
+            ExploreDone = true;
+            return;
+        } 
 
         void GetPkg(CmdGetPkg const & cmd) 
         {
