@@ -14,5 +14,6 @@ include_directories(${Eigen_INCLUDE_DIRS})
 
 # cs_add_executable(planner_node src/planner_node.cxx)
 # cs_add_executable(test_fsm src/test_fsm.cxx)
-cs_add_executable(planner_test src/planner_test.cxx)
+#cs_add_executable(planner_test src/planner_test.cxx)
+cs_add_executable(planner src/planner.cxx)
 # target_link_libraries(planner_node ${PROJECT_NAME})

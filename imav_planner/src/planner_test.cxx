@@ -29,7 +29,7 @@ int main(int argc, char **argv)
                                                                                                                             
                                                                                                                                     */
     
-    /*
+    // /*
     
         // package drop test
 
@@ -44,9 +44,9 @@ int main(int argc, char **argv)
         loopRate.sleep();       machine.process_event(state_machine::CmdDescent(nh));       state_machine::curr_state(machine);
         loopRate.sleep();       machine.process_event(state_machine::CmdLand(nh));          state_machine::curr_state(machine);
                                                                                                                             
-                                                                                                                                    */
+                                                                                                                                    // */
 
-    // /*
+    /*
     
         // mission test
         
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
         loopRate.sleep();       machine.process_event(state_machine::CmdDescent(nh));       state_machine::curr_state(machine);
         loopRate.sleep();       machine.process_event(state_machine::CmdLand(nh));          state_machine::curr_state(machine);
                                                                                                                         
-                                                                                                                                    // */
+                                                                                                                                    */
 
         machine.stop();
     
