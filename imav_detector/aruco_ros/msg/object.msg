@@ -1,7 +1,7 @@
-std_msgs/Header header
+Header header
 
 #color,0-red,1-blue,2-yellow.
-int color_int
+uint32 color_int
 
 #size
-float object_side
+float64 object_side

@@ -13,6 +13,12 @@
   <author email="bence.magyar@pal-robotics.com">Bence Magyar</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>cmake_modules</build_depend>
+
+  <exec_depend>cmake_modules</exec_depend>  
+  <exec_depend>message_runtime</exec_depend>
 
   <depend>cv_bridge</depend>
   <depend>dynamic_reconfigure</depend>
@@ -24,4 +30,6 @@
   <depend>aruco_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>visualization_msgs</depend>
+
+
 </package>

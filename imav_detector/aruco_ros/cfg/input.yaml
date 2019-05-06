@@ -1,5 +1,5 @@
 # yellow
-yellow/h_max: 40
+yellow/h_max: 21
 yellow/h_min: 20
 yellow/s_max: 255
 yellow/s_min: 35
@@ -26,3 +26,6 @@ blue/v_min: 100
 translation/x: 0.3
 translation/y: 0
 translation/z: 0
+
+maximum_contour: 0.5
+minimum_contour: 0.03

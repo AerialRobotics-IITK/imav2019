@@ -14,8 +14,12 @@ find_package(catkin REQUIRED COMPONENTS
   aruco
   aruco_msgs
   sensor_msgs
+  message_generation
   visualization_msgs
 )
+
+add_message_files(FILES object.msg)
+generate_messages(DEPENDENCIES std_msgs geometry_msgs)
 
 generate_dynamic_reconfigure_options(
   cfg/ArucoThreshold.cfg
@@ -25,6 +29,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES aruco_ros_utils
   CATKIN_DEPENDS aruco sensor_msgs tf 
+  message_runtime
 )
 
 include_directories(

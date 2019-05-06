@@ -74,6 +74,7 @@ private:
 
   double marker_size;
   int marker_id;
+  float mins, maxs;
 
   ros::NodeHandle nh;
   image_transport::ImageTransport it;
@@ -107,7 +108,6 @@ public:
     double th1, th2;
     mDetector.getThresholdParams(th1, th2);
     ROS_INFO_STREAM("Threshold method: " << " th1: " << th1 << " th2: " << th2);
-    float mins, maxs;
     mDetector.getMinMaxSize(mins, maxs);
     ROS_INFO_STREAM("Marker size min: " << mins << "  max: " << maxs);
     ROS_INFO_STREAM("Desired speed: " << mDetector.getDesiredSpeed());
@@ -115,6 +115,7 @@ public:
 
 
     image_sub = it.subscribe("threshold_image", 1, &ArucoSimple::image_callback, this);
+    //obj_sub = it.subscribe("threshold_object", 1, &ArucoSimple::obj_callback, this);
     cam_info_sub = nh.subscribe("camera_info", 1, &ArucoSimple::cam_info_callback, this);
 
     image_pub = it.advertise("result", 1);
@@ -181,6 +182,11 @@ public:
   }
 
 
+  // void obj_callback(const aruco_ros::objectConstPtr& msg)
+  // {
+  //   msg->object_side=marker_size;
+  // }
+
   void image_callback(const sensor_msgs::ImageConstPtr& msg)
   {
     if ((image_pub.getNumSubscribers() == 0) &&
@@ -204,7 +210,9 @@ public:
       {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
         inImage = cv_ptr->image;
-
+        nh.getParam("input/minimum_contour", mins);
+        nh.getParam("input/maximum_contour", maxs);
+        mDetector.setMinMaxSize(mins, maxs);    //setting min and max size for markers square {0-1}
         //detection results will go into "markers"
         markers.clear();
         //Ok, let's detect
