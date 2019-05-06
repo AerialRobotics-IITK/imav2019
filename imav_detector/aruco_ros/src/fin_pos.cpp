@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     ros::Subscriber odom_sub_ = nh.subscribe("tfmini_odom", 100, odom_cb_);
-    ros::Subscriber obj_sub_ = nh.subscribe("object/pose", 100, obj_cb_);
+    ros::Subscriber obj_sub_ = nh.subscribe("filter/pose", 100, obj_cb_);
     ros::Publisher msg_pub_ = nh.advertise<aruco_ros::drop_info>("drop_info", 100);
 
     aruco_ros::drop_info msg_;
