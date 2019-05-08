@@ -14,7 +14,7 @@
 
     <node pkg="aruco_ros" type="single" name="aruco_single">
         <remap from="aruco_single/camera_info" to="/usb_cam/camera_info" />
-        <remap from="aruco_single/threshold_image" to="threshold_image" />
+        <remap from="aruco_single/threshold_image" to="filtered_threshold_image" />
         <param name="image_is_rectified" value="True"/>
         <param name="marker_size"        value="$(arg markerSize)"/>
         <param name="marker_id"          value="$(arg markerId)"/>

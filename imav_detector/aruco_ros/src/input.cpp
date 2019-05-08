@@ -8,12 +8,13 @@
 #define WHITE (255,255,255)
 #define BLACK (0,0,0)
 
-cv::Mat img, maskHSV, hsv;
+cv::Mat img, img2, maskHSV, hsv;
 cv::Mat r_maskHSV, b_maskHSV, y_maskHSV;
 cv::Mat r_edges, y_edges, b_edges;
 cv::Mat y_blurred, y_closed, y_morphed;
 cv::Mat r_blurred, r_closed, r_morphed;
 cv::Mat b_blurred, b_closed, b_morphed;
+cv::Mat filtered;
 double r_area, y_area, b_area;
 
 int y_h_min, y_h_max, y_s_min , y_s_max , y_v_min, y_v_max ;
@@ -26,6 +27,7 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
+  image_transport::Publisher image_filt_;
 
 public:
   ImageConverter()
@@ -35,6 +37,7 @@ public:
     image_sub_ = it_.subscribe("colour_image", 1,
       &ImageConverter::imageCb, this);
     image_pub_ = it_.advertise("threshold_image", 1);
+    image_filt_=it_.advertise("filtered_threshold_image",1);
 
   }
 
@@ -151,13 +154,42 @@ public:
         maskHSV = y_morphed;
       }
     }
+
+    filtered=r_morphed;
+
+    for (int i=0;i<filtered.rows/40;i++){
+      for (int j=0;j<filtered.rows/40;j++){
+       int whitepxs=0, blackpxs=0;
+        
+        for (int k=0;k<40;k++){
+          for (int l=0;l<40;l++){
+            if  (filtered.at<uchar>(i*40+k,j*40+l)==0) blackpxs++;
+            else whitepxs++;
+          }
+        }
+
+        float ratio=((float)whitepxs)/blackpxs;
+        if (ratio <0.25){
+          for (int k=0;k<40;k++){
+            for (int l=0;l<40;l++){
+              filtered.at<uchar>(i*40+k,j*40+l)=0;
+            }
+          }
+        }
+      }
+    }
     
     cv::cvtColor(maskHSV,img,cv::COLOR_GRAY2BGR);
-    cv_bridge::CvImage in_msg;
+    cv::cvtColor(filtered,img2,cv::COLOR_GRAY2BGR);
+    cv_bridge::CvImage in_msg, filt_msg;
     in_msg.header.stamp = ros::Time::now();
+    filt_msg.header.stamp = ros::Time::now();
     in_msg.encoding = sensor_msgs::image_encodings::BGR8;
+    filt_msg.encoding = sensor_msgs::image_encodings::BGR8;
     in_msg.image = img;
+    filt_msg.image = img2;
     image_pub_.publish(in_msg.toImageMsg());
+    image_filt_.publish(filt_msg.toImageMsg());
   }
 };
 

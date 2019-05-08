@@ -114,7 +114,7 @@ public:
     
 
 
-    image_sub = it.subscribe("threshold_image", 1, &ArucoSimple::image_callback, this);
+    image_sub = it.subscribe("filtered_threshold_image", 1, &ArucoSimple::image_callback, this);
     cam_info_sub = nh.subscribe("camera_info", 1, &ArucoSimple::cam_info_callback, this);
 
     image_pub = it.advertise("result", 1);
