@@ -50,6 +50,8 @@ or implied, of Rafael Muñoz Salinas.
 #include <aruco_ros/ArucoThresholdConfig.h>
 using namespace aruco;
 
+float mins=0.2, maxs=0.5;
+
 class ArucoSimple
 {
 private:
@@ -74,7 +76,7 @@ private:
 
   double marker_size;
   int marker_id;
-  float mins, maxs;
+  
 
   ros::NodeHandle nh;
   image_transport::ImageTransport it;
@@ -108,8 +110,8 @@ public:
     double th1, th2;
     mDetector.getThresholdParams(th1, th2);
     ROS_INFO_STREAM("Threshold method: " << " th1: " << th1 << " th2: " << th2);
-    mDetector.getMinMaxSize(mins, maxs);
-    ROS_INFO_STREAM("Marker size min: " << mins << "  max: " << maxs);
+    //mDetector.getMinMaxSize(mins, maxs);
+    //ROS_INFO_STREAM("Marker size min: " << mins << "  max: " << maxs);
     ROS_INFO_STREAM("Desired speed: " << mDetector.getDesiredSpeed());
     
 
@@ -189,6 +191,11 @@ public:
 
   void image_callback(const sensor_msgs::ImageConstPtr& msg)
   {
+    
+    nh.param("aruco_single/size/mins", mins);
+        //nh_.getParam("input/yellow/v_min", y_v_min);
+    nh.param("aruco_single/size/maxs", maxs);
+
     if ((image_pub.getNumSubscribers() == 0) &&
         (debug_pub.getNumSubscribers() == 0) &&
         (pose_pub.getNumSubscribers() == 0) &&
@@ -210,10 +217,12 @@ public:
       {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
         inImage = cv_ptr->image;
-        nh.getParam("input/minimum_contour", mins);
-        nh.getParam("input/maximum_contour", maxs);
+       
+        //ROS_INFO_STREAM("Marker size min: " << mins << "  max: " << maxs);
         mDetector.setMinMaxSize(mins, maxs);    //setting min and max size for markers square {0-1}
         //detection results will go into "markers"
+        mDetector.getMinMaxSize(mins, maxs);
+        
         markers.clear();
         //Ok, let's detect
         mDetector.detect(inImage, markers, camParam, marker_size, false);

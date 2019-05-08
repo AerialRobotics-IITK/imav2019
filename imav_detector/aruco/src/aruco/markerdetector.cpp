@@ -55,7 +55,7 @@ namespace aruco
     markerIdDetector_ptrfunc=aruco::FiducidalMarkers::detect;
     pyrdown_level=0; // no image reduction
     //_minSize=0.04;
-    _minSize=0.015;
+    _minSize=0.02;
     _maxSize=0.5;
   }
   /************************************
@@ -1004,6 +1004,7 @@ void MarkerDetector::warpPerspective(const cv::Mat &in,cv::Mat & out, const cv::
     if (min>max) throw cv::Exception(1," min>max","MarkerDetector::setMinMaxSize",__FILE__,__LINE__);
     _minSize=min;
     _maxSize=max;
+    
   }
 
 }

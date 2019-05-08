@@ -14,9 +14,9 @@ aruco_ros::object obj_msg;
 cv::Mat img, maskHSV, hsv;
 cv::Mat r_maskHSV, b_maskHSV, y_maskHSV;
 cv::Mat r_edges, y_edges, b_edges;
-cv::Mat y_blurred, y_closed, y_morphed;
-cv::Mat r_blurred, r_closed, r_morphed;
-cv::Mat b_blurred, b_closed, b_morphed;
+cv::Mat y_blurred, y_opened, y_morphed;
+cv::Mat r_blurred, r_opened, r_morphed;
+cv::Mat b_blurred, b_opened, b_morphed;
 double r_area, y_area, b_area;
 
 int y_h_min, y_h_max, y_s_min , y_s_max , y_v_min, y_v_max ;
@@ -90,18 +90,27 @@ public:
     cv::inRange(hsv,cv::Scalar(b_h_min,b_s_min,b_v_min),cv::Scalar(b_h_max,b_s_max,b_v_max),b_maskHSV);
     cv::inRange(hsv,cv::Scalar(y_h_min,y_s_min,y_v_min),cv::Scalar(y_h_max,y_s_max,y_v_max),y_maskHSV);
     
-    cv::GaussianBlur(y_maskHSV, y_blurred, cv::Size(9,9), 0, 0);
-    cv::GaussianBlur(r_maskHSV, r_blurred, cv::Size(9,9), 0, 0);
-    cv::GaussianBlur(b_maskHSV, b_blurred, cv::Size(9,9), 0, 0);
+    // cv::GaussianBlur(y_maskHSV, y_blurred, cv::Size(5,5), 0, 0);
+    // cv::GaussianBlur(r_maskHSV, r_blurred, cv::Size(5,5), 0, 0);
+    // cv::GaussianBlur(b_maskHSV, b_blurred, cv::Size(5,5), 0, 0);
+    
+    cv::bilateralFilter(y_maskHSV, y_blurred,9,75,75);
+    cv::bilateralFilter(r_maskHSV, r_blurred,9,75,75);
+    cv::bilateralFilter(b_maskHSV, b_blurred,9,75,75);
 
-    cv::morphologyEx(y_blurred, y_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(r_blurred, r_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(b_blurred, b_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
+    // cv::medianBlur( y_maskHSV, y_blurred,5 );
+    // cv::medianBlur( r_maskHSV, r_blurred,5  );
+    // cv::medianBlur( b_maskHSV, b_blurred,5 );
 
-    cv::morphologyEx(y_closed, y_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(r_closed, r_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(b_closed, b_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    std::cout << "pixel" << y_morphed.at<uchar>(0, 0) << std::endl;
+    cv::morphologyEx(y_blurred, y_opened, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3), cv::Point(1,1)));
+    cv::morphologyEx(r_blurred, r_opened, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3), cv::Point(1,1)));
+    cv::morphologyEx(b_blurred, b_opened, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3), cv::Point(1,1)));
+    
+    cv::morphologyEx(y_opened, y_morphed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(9,9), cv::Point(1,1)));
+    cv::morphologyEx(r_opened, r_morphed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(9,9), cv::Point(1,1)));
+    cv::morphologyEx(b_opened, b_morphed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(9,9), cv::Point(1,1)));
+
+    //std::cout << "pixel" << y_morphed.at<uchar>(0, 0) << std::endl;
 
     for(int i=0; i<y_morphed.rows; i++)
     {
