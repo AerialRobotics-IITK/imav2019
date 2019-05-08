@@ -1,5 +1,5 @@
-isSim: true
+isSim: false
 hoverHeight: 4.0
-descentHeight: 0.3
+descentHeight: 1.2
 holdInterval: 5
-landHeight: 0.08
+landHeight: 0.35

@@ -1,5 +1,5 @@
 <launch>
-    <group ns="firefly">
+    <group ns="ironman">
         <node name="planner" pkg="imav_planner" type="planner" output="screen" clear_params="true">
             <rosparam file="$(find imav_planner)/params/planner.yaml" />
         </node>
