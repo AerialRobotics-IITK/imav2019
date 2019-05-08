@@ -3,7 +3,6 @@ project(aruco_ros)
 
 find_package(OpenCV REQUIRED)
 
-
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   dynamic_reconfigure
@@ -15,31 +14,23 @@ find_package(catkin REQUIRED COMPONENTS
   aruco
   aruco_msgs
   sensor_msgs
-  visualization_msgs
   message_generation
+  visualization_msgs
 )
+
+add_message_files(FILES object.msg)
+generate_messages(DEPENDENCIES std_msgs geometry_msgs)
 
 generate_dynamic_reconfigure_options(
   cfg/ArucoThreshold.cfg
 )
 
-add_message_files(
-  FILES
-  drop_info.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-)
-
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES aruco_ros_utils
-  CATKIN_DEPENDS aruco sensor_msgs tf message_runtime
+  CATKIN_DEPENDS aruco sensor_msgs tf 
+  message_runtime
 )
-
 
 include_directories(
   include
@@ -74,8 +65,10 @@ target_link_libraries(input ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_executable(object_pos src/object_pos.cpp)
 target_link_libraries(object_pos ${catkin_LIBRARIES})
 
-add_executable(fin_pos src/fin_pos.cpp)
-target_link_libraries(fin_pos ${catkin_LIBRARIES})
+install(PROGRAMS
+  src/filter.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 #############
 ## Install ##
