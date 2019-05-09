@@ -84,7 +84,7 @@ public:
     cv::cvtColor(img,hsv,CV_BGR2HSV);
 
     cv::inRange(hsv,cv::Scalar(r_h_min,r_s_min,r_v_min),cv::Scalar(r_h_max,r_s_max,r_v_max),r_maskHSV);
-   `
+   
     cv::morphologyEx(y_closed, y_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
     cv::morphologyEx(r_closed, r_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
     cv::morphologyEx(b_closed, b_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
@@ -146,7 +146,7 @@ public:
       }
     }
 
-    filtered=sqr_filter(r_morphed,nh_)
+    filtered=sqr_filter(r_morphed,nh_);
 
     cv::cvtColor(maskHSV,img,cv::COLOR_GRAY2BGR);
     cv::cvtColor(filtered,img2,cv::COLOR_GRAY2BGR);
