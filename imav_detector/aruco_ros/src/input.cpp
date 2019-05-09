@@ -4,6 +4,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <aruco_ros/Square_Filter.h>
 
 #define WHITE (255,255,255)
 #define BLACK (0,0,0)
@@ -83,17 +84,7 @@ public:
     cv::cvtColor(img,hsv,CV_BGR2HSV);
 
     cv::inRange(hsv,cv::Scalar(r_h_min,r_s_min,r_v_min),cv::Scalar(r_h_max,r_s_max,r_v_max),r_maskHSV);
-    cv::inRange(hsv,cv::Scalar(b_h_min,b_s_min,b_v_min),cv::Scalar(b_h_max,b_s_max,b_v_max),b_maskHSV);
-    cv::inRange(hsv,cv::Scalar(y_h_min,y_s_min,y_v_min),cv::Scalar(y_h_max,y_s_max,y_v_max),y_maskHSV);
-    
-    cv::GaussianBlur(y_maskHSV, y_blurred, cv::Size(9,9), 0, 0);
-    cv::GaussianBlur(r_maskHSV, r_blurred, cv::Size(9,9), 0, 0);
-    cv::GaussianBlur(b_maskHSV, b_blurred, cv::Size(9,9), 0, 0);
-
-    cv::morphologyEx(y_blurred, y_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(r_blurred, r_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-    cv::morphologyEx(b_blurred, b_closed, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
-
+   `
     cv::morphologyEx(y_closed, y_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
     cv::morphologyEx(r_closed, r_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
     cv::morphologyEx(b_closed, b_morphed, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2,2), cv::Point(-1,-1)));
@@ -155,30 +146,8 @@ public:
       }
     }
 
-    filtered=r_morphed;
+    filtered=sqr_filter(r_morphed,nh_)
 
-    for (int i=0;i<filtered.rows/40;i++){
-      for (int j=0;j<filtered.rows/40;j++){
-       int whitepxs=0, blackpxs=0;
-        
-        for (int k=0;k<40;k++){
-          for (int l=0;l<40;l++){
-            if  (filtered.at<uchar>(i*40+k,j*40+l)==0) blackpxs++;
-            else whitepxs++;
-          }
-        }
-
-        float ratio=((float)whitepxs)/blackpxs;
-        if (ratio <0.25){
-          for (int k=0;k<40;k++){
-            for (int l=0;l<40;l++){
-              filtered.at<uchar>(i*40+k,j*40+l)=0;
-            }
-          }
-        }
-      }
-    }
-    
     cv::cvtColor(maskHSV,img,cv::COLOR_GRAY2BGR);
     cv::cvtColor(filtered,img2,cv::COLOR_GRAY2BGR);
     cv_bridge::CvImage in_msg, filt_msg;
