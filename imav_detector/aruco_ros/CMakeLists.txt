@@ -77,6 +77,9 @@ target_link_libraries(object_pos ${catkin_LIBRARIES})
 add_executable(fin_pos src/fin_pos.cpp)
 target_link_libraries(fin_pos ${catkin_LIBRARIES})
 
+add_executable(KF src/Main.cpp)
+target_link_libraries(KF ${catkin_LIBRARIES})
+
 #############
 ## Install ##
 #############

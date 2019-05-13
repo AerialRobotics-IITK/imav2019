@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+	<node pkg="filter" type="KalmanFilter" name="KalmanFilter" output="screen">
+   		<rosparam command="load" file="$(find filter)/launch/Params.yaml" />
+   		<remap from="Measurement_data" to="/package/position" />
+   		<remap from="Prediction_data" to="/icarus/imu" />
+   		<remap from="Filtered_data" to="/icarus/command/pose" />
+	</node>
+</launch>
