@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   message_generation
   visualization_msgs
+  eigen_conversions
 )
 
 add_message_files(FILES object.msg)

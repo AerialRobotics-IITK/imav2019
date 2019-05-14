@@ -32,3 +32,4 @@ include_directories(
 add_executable(gripper_control src/gripper_control.cxx )
 target_link_libraries(gripper_control
 ${catkin_LIBRARIES} )
+

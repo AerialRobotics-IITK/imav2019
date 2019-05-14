@@ -30,6 +30,6 @@
   <depend>aruco_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>visualization_msgs</depend>
-
+  <depend>eigen_conversions</depend>
 
 </package>

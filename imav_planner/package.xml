@@ -25,6 +25,7 @@
   <depend>nav_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>mavros_msgs</depend>
   <depend>message_generation</depend>
   <depend>tf</depend>
   <depend>tf_conversions</depend>
