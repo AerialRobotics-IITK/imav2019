@@ -15,7 +15,7 @@ window_size=10
 def tag_detect_node():
 
     global aruco_filtered_pose_pub
-    rospy.init_node('aruco_ros', anonymous=True)
+    rospy.init_node('filter')
     aruco_filtered_pose_pub = rospy.Publisher("filter/pose", PoseStamped, queue_size=10)
     aruco_tag_sub = rospy.Subscriber("object/pose",PoseStamped, tag_detection_cb)
 

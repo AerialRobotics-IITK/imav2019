@@ -65,6 +65,9 @@ target_link_libraries(input ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_executable(object_pos src/object_pos.cpp)
 target_link_libraries(object_pos ${catkin_LIBRARIES})
 
+add_executable(KalmanFilter src/kalman_filter.cpp)
+target_link_libraries(KalmanFilter ${catkin_LIBRARIES})
+
 install(PROGRAMS
   src/filter.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

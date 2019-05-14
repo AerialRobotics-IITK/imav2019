@@ -1,5 +1,5 @@
 # yellow
-yellow/h_max: 40
+yellow/h_max: 21
 yellow/h_min: 20
 yellow/s_max: 255
 yellow/s_min: 35                    
@@ -23,7 +23,7 @@ blue/v_max: 255
 blue/v_min: 100
 
 #translation
-translation/x: 0.3
+translation/x: 0
 translation/y: 0
 translation/z: 0
 

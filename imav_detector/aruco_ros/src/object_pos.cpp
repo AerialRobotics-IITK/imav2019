@@ -33,13 +33,13 @@ void imucb(const sensor_msgs::Imu::ConstPtr &msg)
 }
 
 
-void odomcb(const geometry_msgs::PoseStamped::ConstPtr &msg)
+void odomcb(const geometry_msgs::Pose::ConstPtr &msg)
 {
-    x_glob = msg->pose.position.x;
-    y_glob = msg->pose.position.y;
-    z_glob = msg->pose.position.z;
+    x_glob = msg->position.x;
+    y_glob = msg->position.y;
+    z_glob = msg->position.z;
     pose_detected_flag = 1;
-    pos_sp.pose.orientation=msg->pose.orientation;
+    pos_sp.pose.orientation=msg->orientation;
 
 }
 

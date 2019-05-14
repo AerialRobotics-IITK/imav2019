@@ -50,7 +50,7 @@ or implied, of Rafael Muñoz Salinas.
 #include <aruco_ros/ArucoThresholdConfig.h>
 using namespace aruco;
 
-float mins=0.2, maxs=0.5;
+float mins=0.02, maxs=0.5;
 
 class ArucoSimple
 {
