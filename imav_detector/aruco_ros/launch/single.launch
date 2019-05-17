@@ -8,26 +8,44 @@
     <arg name="corner_refinement" default="LINES" /> <!-- NONE, HARRIS, LINES, SUBPIX -->
 
     <node name="input" type="input" pkg="aruco_ros" output="screen">
-        <remap from="colour_image" to="/usb_cam/image_raw" />
         <rosparam file="$(find aruco_ros)/cfg/input.yaml" />
-    </node>
+        <remap from="colour_image" to="usb_cam/image_raw" />
+    </node>  
 
-    <node pkg="aruco_ros" type="single" name="aruco_single">
-        <remap from="aruco_single/camera_info" to="/usb_cam/camera_info" />
-        <remap from="aruco_single/threshold_image" to="filtered_threshold_image" />
+    <node pkg="aruco_ros" type="single" name="aruco_single" output="screen">
+        <remap from="aruco_single/camera_info" to="usb_cam/camera_info" />
+        <remap from="aruco_single/threshold_image" to="threshold_image" />
+        <rosparam file="$(find aruco_ros)/cfg/input.yaml" />
         <param name="image_is_rectified" value="True"/>
-        <param name="marker_size"        value="$(arg markerSize)"/>
-        <param name="marker_id"          value="$(arg markerId)"/>
-        <param name="reference_frame"    value="$(arg ref_frame)"/>   <!-- frame in which the marker pose will be refered -->
-        <param name="camera_frame"       value="stereo_gazebo_$(arg eye)_camera_optical_frame"/>
-        <param name="marker_frame"       value="$(arg marker_frame)" />
-        <param name="corner_refinement"  value="$(arg corner_refinement)" />
+        <param name="marker_size"        value="0.1"/>
+        <param name="size_min"           value="0.1"/>
+        <param name="size_max"           value="0.5"/>
+        <param name="marker_id"          value="582"/>
+        <param name="reference_frame"    value=" "/>   
+        <param name="camera_frame"       value="camera_rgb"/>
+        <param name="marker_frame"       value="aruco_marker_frame" />
+        <param name="corner_refinement"  value="LINES" />
     </node>
 
-    <node name="object_pos" type="object_pos" pkg="aruco_ros">
-        <remap from="odometry" to="/tfmini_odom" />
-	<remap from="imu/data" to="/ironman/pilot/imu/data" />
-	<remap from="object/pose" to="/object/pose" />
+    <node name="object_pos" type="object_pos" pkg="aruco_ros" output="screen">
+        <remap from="odometry" to="ground_truth/pose" />
+        <remap from="imu/data" to="mavros/imu/data" />
+        <remap from="aruco_single/pose" to="aruco_single/pose" />
     </node>
+
+    <node pkg="aruco_ros" type="filter.py" name="filter" >
+        <remap from="filter/pose" to="global_object/pose" />
+        <remap from="object/pose" to="object/pose" />
+    </node>
+
+    <node pkg="aruco_ros" type="KalmanFilter" name="KalmanFilter" output="screen">
+   		<rosparam command="load" file="$(find aruco_ros)/launch/Params.yaml" />
+   		<remap from="Measurement_data" to="object/pose" />
+   		<remap from="Prediction_data" to="/mavros/imu/data" />
+   		<remap from="KF" to="/k_filter/pose" />
+    </node>
+
+   
+
 </launch>
 

@@ -6,9 +6,12 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <math.h>
+#include <ros/ros.h>
 #include <stdio.h>
 
 using namespace Eigen;
+
+int flag=0;
 
 /*
 Standard matrices for the Kalman Filter
@@ -157,11 +160,11 @@ void Load_Params(ros::NodeHandle nh){
 		}
 	}
 
-	std::cout << Hk << std::endl << std::endl;
+/*	std::cout << Hk << std::endl << std::endl;
 	std::cout << Qk << std::endl << std::endl;
 	std::cout << Fk << std::endl << std::endl;
 	std::cout << Fk*Fk.transpose() << std::endl << std::endl;
 	std::cout << Bk << std::endl << std::endl;
 	std::cout << Rk << std::endl << std::endl;
-	std::cout << CovarX;
+	std::cout << CovarX;*/
 }

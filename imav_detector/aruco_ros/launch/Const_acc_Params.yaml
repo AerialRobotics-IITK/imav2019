@@ -1,6 +1,6 @@
 #Hk row number and column number
 Hkr: 3
-Hkc: 9
+Hkc: 6
 
 #Hk 1st row
 Hk00: 1
@@ -9,9 +9,6 @@ Hk02: 0
 Hk03: 0
 Hk04: 0
 Hk05: 0
-Hk06: 0
-Hk07: 0
-Hk08: 0
 
 #Hk 2nd row
 Hk10: 0
@@ -20,9 +17,6 @@ Hk12: 0
 Hk13: 0
 Hk14: 0
 Hk15: 0
-Hk16: 0
-Hk17: 0
-Hk18: 0
 
 #Hk 3rd row
 Hk20: 0
@@ -31,15 +25,12 @@ Hk22: 1
 Hk23: 0
 Hk24: 0
 Hk25: 0
-Hk26: 0
-Hk27: 0
-Hk28: 0
 
 
 
 #Fk row and column number
-Fkr: 9
-Fkc: 9
+Fkr: 6
+Fkc: 6
 
 #Fk 1st row
 Fk00: 1
@@ -48,9 +39,6 @@ Fk02: 0
 Fk03: 0.01
 Fk04: 0
 Fk05: 0
-Fk06: 0.000025
-Fk07: 0
-Fk08: 0
 
 #Fk 2nd row
 Fk10: 0
@@ -59,9 +47,6 @@ Fk12: 0
 Fk13: 0
 Fk14: 0.01
 Fk15: 0
-Fk16: 0
-Fk17: 0.000025
-Fk18: 0
 
 #Fk 3rd row
 Fk20: 0
@@ -70,9 +55,6 @@ Fk22: 1
 Fk23: 0
 Fk24: 0
 Fk25: 0.01
-Fk26: 0
-Fk27: 0
-Fk28: 0.000025
 
 #Fk 4th row
 Fk30: 0
@@ -81,9 +63,6 @@ Fk32: 0
 Fk33: 1
 Fk34: 0
 Fk35: 0
-Fk36: 0.005
-Fk37: 0
-Fk38: 0
 
 #Fk 5th row
 Fk40: 0
@@ -92,9 +71,6 @@ Fk42: 0
 Fk43: 0
 Fk44: 1
 Fk45: 0
-Fk46: 0
-Fk47: 0.005
-Fk48: 0
 
 #Fk 6th row
 Fk50: 0
@@ -103,46 +79,11 @@ Fk52: 0
 Fk53: 0
 Fk54: 0
 Fk55: 1
-Fk56: 0
-Fk57: 0
-Fk58: 0.005
 
-#Fk 7th row
-Fk60: 0
-Fk61: 0
-Fk62: 0
-Fk63: 0
-Fk64: 0
-Fk65: 0
-Fk66: 0
-Fk67: 0
-Fk68: 0
-
-#Fk 8th row
-Fk70: 0
-Fk71: 0
-Fk72: 0
-Fk73: 0
-Fk74: 0
-Fk75: 0
-Fk76: 0
-Fk77: 0
-Fk78: 0
-
-#Fk 9th row
-Fk80: 0
-Fk81: 0
-Fk82: 0
-Fk83: 0
-Fk84: 0
-Fk85: 0
-Fk86: 0
-Fk87: 0
-Fk88: 0
 
 #Qk row and column number
-Qkr: 9
-Qkc: 9
+Qkr: 6
+Qkc: 6
 
 #Qk 1st row
 Qk00: 12
@@ -151,9 +92,6 @@ Qk02: 0
 Qk03: 0
 Qk04: 0
 Qk05: 0
-Qk06: 0
-Qk07: 0
-Qk08: 0
 
 #Qk 2nd row
 Qk10: 0
@@ -162,9 +100,6 @@ Qk12: 0
 Qk13: 0
 Qk14: 0
 Qk15: 0
-Qk16: 0
-Qk17: 0
-Qk18: 0
 
 #Qk 3rd row
 Qk20: 0
@@ -173,9 +108,6 @@ Qk22: 12
 Qk23: 0
 Qk24: 0
 Qk25: 0
-Qk26: 0
-Qk27: 0
-Qk28: 0
 
 #Qk 4th row
 Qk30: 0
@@ -184,9 +116,6 @@ Qk32: 0
 Qk33: 12
 Qk34: 0
 Qk35: 0
-Qk36: 0
-Qk37: 0
-Qk38: 0
 
 #Qk 5th row
 Qk40: 0
@@ -195,9 +124,6 @@ Qk42: 0
 Qk43: 0
 Qk44: 12
 Qk45: 0
-Qk46: 0
-Qk47: 0
-Qk48: 0
 
 #Qk 6th row
 Qk50: 0
@@ -206,119 +132,71 @@ Qk52: 0
 Qk53: 0
 Qk54: 0
 Qk55: 12
-Qk56: 0
-Qk57: 0
-Qk58: 0
 
-#Qk 7th row
-Qk50: 0
-Qk51: 0
-Qk52: 0
-Qk53: 0											
-Qk54: 0
-Qk55: 0
-Qk56: 12
-Qk57: 0
-Qk58: 0
 
-#Qk 6th row
-Qk50: 0
-Qk51: 0
-Qk52: 0
-Qk53: 0
-Qk54: 0
-Qk55: 0
-Qk56: 0
-Qk57: 12
-Qk58: 0
-
-#Qk 6th row
-Qk50: 0
-Qk51: 0
-Qk52: 0
-Qk53: 0
-Qk54: 0
-Qk55: 0
-Qk56: 0
-Qk57: 0
-Qk58: 12
 
 #Rk row number and column number
 Rkr: 3
 Rkc: 3
 
 #Rk 1st row
-Rk00: 15
+Rk00: 16
 Rk01: 0
 Rk02: 0
 
 #Rk 2nd row
 Rk10: 0
-Rk11: 15
+Rk11: 16
 Rk12: 0
 
 #Rk 3rd row
 Rk20: 0
 Rk21: 0
-Rk22: 15
+Rk22: 16
 
 
 
 #Bk row and column number
-Bkr: 9
+Bkr: 6
 Bkc: 3
 
 #Bk 1st row
-Bk00: 0.000025
+Bk00: 0.00005
 Bk01: 0
 Bk02: 0
 
 #Bk 2nd row
 Bk10: 0
-Bk11: 0.000025
+Bk11: 0.00005
 Bk12: 0
 
 #Bk 3rd row
 Bk20: 0
 Bk21: 0
-Bk22: 0.000025
+Bk22: 0.00005
 
 #Bk 4th row
-Bk30: 0.005
+Bk30: 0.1
 Bk31: 0
 Bk32: 0
 
 #Bk 5th row
 Bk40: 0
-Bk41: 0.005
+Bk41: 0.1
 Bk42: 0
 
 #Bk 6th row
 Bk50: 0
 Bk51: 0
-Bk52: 0.005
+Bk52: 0.1
 
-#Bk 7th row
-Bk60: 1
-Bk61: 0
-Bk62: 0
-
-#Bk 8th row
-Bk70: 0
-Bk71: 1
-Bk72: 0
-
-#Bk 9th row
-Bk80: 0
-Bk81: 0
-Bk82: 1
 
 #Covariance
-Cov_order: 9 
+Cov_order: 6 
 
 #Xk, Zk, Uk, Kgain
-Xk: 9
+Xk: 6
 Zk: 3
 Uk: 3
-Kgainr: 9
+Kgainr: 6
 Kgainc: 3

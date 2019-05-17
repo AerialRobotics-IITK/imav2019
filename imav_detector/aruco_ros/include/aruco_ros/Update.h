@@ -6,6 +6,8 @@ The argument can be changed to that of incoming message
 void Update_step(const geometry_msgs::PoseStamped::ConstPtr& measurement){
 
     //Preproccessing for making the output message ready for publishing. Can be changed/omitted
+    //std::cout << "This code was called" << std::endl;
+    flag=1;
     float xx,yy,zz;
     xx=measurement->pose.position.x;
     yy=measurement->pose.position.y;
@@ -29,7 +31,10 @@ void Update_step(const geometry_msgs::PoseStamped::ConstPtr& measurement){
                 measurement->pose.position.z,
                 0,
                 0,
-                0;
+                0,
+		0,
+		0,
+		0;
         return;
     }
     //Calculating new belief of x

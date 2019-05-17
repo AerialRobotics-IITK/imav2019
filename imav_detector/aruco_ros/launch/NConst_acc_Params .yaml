@@ -214,7 +214,7 @@ Qk58: 0
 Qk50: 0
 Qk51: 0
 Qk52: 0
-Qk53: 0											
+Qk53: 0
 Qk54: 0
 Qk55: 0
 Qk56: 12
@@ -248,19 +248,19 @@ Rkr: 3
 Rkc: 3
 
 #Rk 1st row
-Rk00: 15
+Rk00: 16
 Rk01: 0
 Rk02: 0
 
 #Rk 2nd row
 Rk10: 0
-Rk11: 15
+Rk11: 16
 Rk12: 0
 
 #Rk 3rd row
 Rk20: 0
 Rk21: 0
-Rk22: 15
+Rk22: 16
 
 
 

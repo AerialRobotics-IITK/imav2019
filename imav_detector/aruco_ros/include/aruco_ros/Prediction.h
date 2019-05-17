@@ -32,6 +32,7 @@ void Prediction_step(const sensor_msgs::Imu::ConstPtr& control){
     temp2=(Hk*CovarhatX)*Hk.transpose()+Rk;
     temp3=temp2.inverse();
     KGain=(CovarhatX*Hk.transpose())*temp3;
+    //std::cout << Xk << std::endl << std::endl; 
 
     output.pose.position.x=Xk(0,0);
     output.pose.position.y=Xk(1,0);
