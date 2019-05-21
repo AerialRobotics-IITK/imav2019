@@ -1,9 +1,8 @@
 # Progress Tracker
 
-#### Tracking all tasks, issues and references here.
-#### Please mention date of completion and name of task-doer (for easy follow-up) when updating this list.
+Tracking all tasks, issues and references here.
+Please mention date of completion and name of task-doer (for easy follow-up) when updating this list.
 
----
 ## Current Tasks
 
 ### Immediate (HIGH PRIORITY)
@@ -37,7 +36,6 @@
 - [ ] Odroid Setup
 - [ ] Gripper Design
 
-
 ### Non-Technical
 - [ ] Sponsor Emails
 - [ ] Normal Bills
@@ -47,7 +45,6 @@
 - [ ] List reliable purchase sources (online and local)
 - [ ] DoRD $$$ 
 
----
 ## To Buy/Get
 - [ ] Antenna-based Wifi Module
 - [ ] Wifi router
@@ -57,7 +54,6 @@
 - [ ] Jetson carrier board
 - [ ] Flamewheel 450 or other frame
 
----
 ## Final Adjustments
 - Detection 
     - [ ] Handling illumidnation variance
@@ -66,7 +62,7 @@
 
 - Landing
     - [ ] Parameters
----
+
 ## Issues
 
 ### Unsolved
@@ -84,7 +80,6 @@
 - *USB Cam not working on Odroid with ROS Melodic and Ubuntu 18.04* :
     Downgrade to ROS Kinetic and Ubuntu 16.04
 
----
 ## References
 (Maintain a list of references here that would be useful for documentation later.)
 #### Planner
