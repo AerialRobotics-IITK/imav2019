@@ -9,11 +9,12 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [ ] **PROPOSAL**
 - [ ] 4I 3D Printing
 - [ ] NUC repair
-- [ ] Budget Proposal Submission
+- [X] Budget Proposal Submission
 
 ### Testing
 - [ ] MPC tuning for Flamewheel (KDE+Pixhawk)
-- [ ] ArUco marker based landing
+- [ ] Benchmarking vision modules with aruco
+- [X] ArUco marker based landing
 - [ ] Deployment of detection module
 - [ ] Mailbox preparation
 - [ ] DroneNet video recording
@@ -22,9 +23,9 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - Mapping
     - [ ] Data collection
 - Detection
-    - [ ] Load params directly from camera info file
+    - [X] Load params directly from camera info file
 - Multimaster
-    - [ ] Eliminate GUI
+    - [X] Eliminate GUI
 - Odroid
     - [ ] Downgrade ROS and OS
 - House detection
@@ -33,7 +34,7 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
     - [ ] Transform to global coordinates
 
 ### Hardware
-- [ ] Odroid Setup
+- [X] Odroid Setup
 - [ ] Gripper Design
 
 ### Non-Technical
@@ -46,7 +47,7 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [ ] DoRD $$$ 
 
 ## To Buy/Get
-- [ ] Antenna-based Wifi Module
+- [X] Antenna-based Wifi Module
 - [ ] Wifi router
 - [ ] eMMC Reader
 - [ ] KDE Boxes
@@ -82,6 +83,8 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 
 ## References
 (Maintain a list of references here that would be useful for documentation later.)
+#### Misc. References (To be documented in detail later)
+- [Catkin WOrkspace Config](https://catkin-tools.readthedocs.io/en/latest/verbs/catkin_config.html)
 #### Planner
 - [Boost MSM Documentation](https://www.boost.org/doc/libs/1_64_0/libs/msm/doc/HTML/index.html)
 - [ETHZ MAV Control - State Machine Implementation](https://github.com/ethz-asl/mav_control_rw/tree/master/mav_control_interface/src)
