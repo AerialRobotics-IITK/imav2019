@@ -1,10 +1,10 @@
 # yellow
-yellow/h_max: 21
-yellow/h_min: 20
+yellow/h_max: 0
+yellow/h_min: 1
 yellow/s_max: 255
-yellow/s_min: 35                    
+yellow/s_min: 20                    
 yellow/v_max: 255
-yellow/v_min: 100
+yellow/v_min: 20
 
 #red
 red/h_max: 20
@@ -15,7 +15,7 @@ red/v_max: 255
 red/v_min: 40
 
 #blue
-blue/h_max: 80
+blue/h_max: 60
 blue/h_min: 60
 blue/s_max: 255
 blue/s_min: 35
@@ -27,5 +27,5 @@ translation/x: 0
 translation/y: 0
 translation/z: 0
 
-size/maxs: 0.5
-size/mins: 0.4
+size/maxs: 0.8
+size/mins: 0.04

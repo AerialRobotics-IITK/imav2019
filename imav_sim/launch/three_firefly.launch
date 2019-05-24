@@ -37,9 +37,9 @@
     <node name="gripper" pkg="imav_sim" type="gripper_control" output="log" />
     <!-- <node name="planner" pkg="imav_planner" type="planner_test" output="screen" /> -->
 
-    
+
   </group>
-  
+
   <!-- Orange -->
   <group ns="vega">
     <include file="$(find imav_sim)/launch/spawn_mav.launch">
@@ -63,8 +63,8 @@
     </node>
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="log" args="0 1 6 0 5"/>
     <node name="gripper" pkg="imav_sim" type="gripper_control" output="log" />
-    
-   
+
+
   </group>
 
   <!-- Red -->
@@ -91,14 +91,14 @@
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="log" args="0 -1 6 0 5"/>
     <node name="gripper" pkg="imav_sim" type="gripper_control" output="log" />
 
-    <node name="input" type="input" pkg="aruco_ros" output="screen">
+    <!--node name="input" type="input" pkg="aruco_ros" output="screen">
         <rosparam file="$(find aruco_ros)/cfg/input.yaml" />
         <remap from="colour_image" to="nadir_cam/image_raw" />
-    </node>  
+    </node-->  
 
     <node pkg="aruco_ros" type="single" name="aruco_single" output="screen">
         <remap from="aruco_single/camera_info" to="nadir_cam/camera_info" />
-        <remap from="aruco_single/threshold_image" to="threshold_image" />
+        <remap from="aruco_single/usb_image" to="nadir_cam/image_raw" />
         <rosparam file="$(find aruco_ros)/cfg/input.yaml" />
         <param name="image_is_rectified" value="True"/>
         <param name="marker_size"        value="0.1"/>
@@ -118,17 +118,16 @@
         <remap from="object/pose" to="command/pose" />
     </node>
 
-    <node pkg="aruco_ros" type="filter.py" name="filter" >
+    <!--node pkg="aruco_ros" type="filter.py" name="filter" >
         <remap from="filter/pose" to="m_filter/pose" />
         <remap from="object/pose" to="command/pose" />
     </node>
-
     <node pkg="aruco_ros" type="KalmanFilter" name="KalmanFilter" output="screen">
       <rosparam command="load" file="$(find aruco_ros)/launch/Params.yaml" />
       <remap from="Measurement_data" to="command/pose" />
       <remap from="Prediction_data" to="imu" />
       <remap from="Filtered_data" to="/k_filter/pose" />
-    </node>
+    </node-->
 
   </group>
 

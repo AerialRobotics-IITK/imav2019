@@ -1,16 +1,12 @@
 /*****************************
 Copyright 2011 Rafael Muñoz Salinas. All rights reserved.
-
 Redistribution and use in source and binary forms, with or without modification, are
 permitted provided that the following conditions are met:
-
    1. Redistributions of source code must retain the above copyright notice, this list of
       conditions and the following disclaimer.
-
    2. Redistributions in binary form must reproduce the above copyright notice, this list
       of conditions and the following disclaimer in the documentation and/or other materials
       provided with the distribution.
-
 THIS SOFTWARE IS PROVIDED BY Rafael Muñoz Salinas ''AS IS'' AND ANY EXPRESS OR IMPLIED
 WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
 FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Rafael Muñoz Salinas OR
@@ -20,7 +16,6 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 The views and conclusions contained in the software and documentation are those of the
 authors and should not be interpreted as representing official policies, either expressed
 or implied, of Rafael Muñoz Salinas.
@@ -36,6 +31,7 @@ or implied, of Rafael Muñoz Salinas.
 #include <iostream>
 #include <aruco/aruco.h>
 #include <aruco/cvdrawingutils.h>
+#include "aruco_ros/input.h"
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -48,6 +44,7 @@ or implied, of Rafael Muñoz Salinas.
 
 #include <dynamic_reconfigure/server.h>
 #include <aruco_ros/ArucoThresholdConfig.h>
+#include <aruco_ros/object.h>
 using namespace aruco;
 
 float mins=0.02, maxs=0.5;
@@ -56,6 +53,7 @@ class ArucoSimple
 {
 private:
   cv::Mat inImage;
+  cv::Mat threshold_image;
   aruco::CameraParameters camParam;
   tf::StampedTransform rightToLeft;
   bool useRectifiedImages;
@@ -70,19 +68,21 @@ private:
   ros::Publisher position_pub;
   ros::Publisher marker_pub; //rviz visualization marker
   ros::Publisher pixel_pub;
+  ros::Subscriber obj_sub; //takes color and size data published by simple_single.cpp
   std::string marker_frame;
   std::string camera_frame;
   std::string reference_frame;
 
   double marker_size;
   int marker_id;
-  
+
 
   ros::NodeHandle nh;
   image_transport::ImageTransport it;
   image_transport::Subscriber image_sub;
 
   tf::TransformListener _tfListener;
+  //cv::namedWindow("in");
 
   dynamic_reconfigure::Server<aruco_ros::ArucoThresholdConfig> dyn_rec_server;
 
@@ -113,11 +113,11 @@ public:
     //mDetector.getMinMaxSize(mins, maxs);
     //ROS_INFO_STREAM("Marker size min: " << mins << "  max: " << maxs);
     ROS_INFO_STREAM("Desired speed: " << mDetector.getDesiredSpeed());
-    
 
 
-    image_sub = it.subscribe("threshold_image", 1, &ArucoSimple::image_callback, this);
-    //obj_sub = it.subscribe("threshold_object", 1, &ArucoSimple::obj_callback, this);
+
+    image_sub = it.subscribe("usb_image", 1, &ArucoSimple::image_callback, this);
+    //obj_sub = nh.subscribe("threshold_object", 1, &ArucoSimple::obj_callback, this);
     cam_info_sub = nh.subscribe("camera_info", 1, &ArucoSimple::cam_info_callback, this);
 
     image_pub = it.advertise("result", 1);
@@ -184,17 +184,12 @@ public:
   }
 
 
-  // void obj_callback(const aruco_ros::objectConstPtr& msg)
-  // {
-  //   msg->object_side=marker_size;
-  // }
-
+  //ROS_INFO("Size of object is %lf",marker_size);
   void image_callback(const sensor_msgs::ImageConstPtr& msg)
   {
-    
-    nh.param("aruco_single/size/mins", mins);
-        //nh_.getParam("input/yellow/v_min", y_v_min);
-    nh.param("aruco_single/size/maxs", maxs);
+
+    nh.getParam("/aruco_single/size/maxs",maxs);
+    nh.getParam("/aruco_single/size/mins",mins);
 
     if ((image_pub.getNumSubscribers() == 0) &&
         (debug_pub.getNumSubscribers() == 0) &&
@@ -215,15 +210,28 @@ public:
       cv_bridge::CvImagePtr cv_ptr;
       try
       {
-        cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
+        cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         inImage = cv_ptr->image;
-       
+
         //ROS_INFO_STREAM("Marker size min: " << mins << "  max: " << maxs);
         mDetector.setMinMaxSize(mins, maxs);    //setting min and max size for markers square {0-1}
         //detection results will go into "markers"
-        mDetector.getMinMaxSize(mins, maxs);
-        
+        //mDetector.getMinMaxSize(mins, maxs);
+
+        //cv::imshow("in",inImage);
+        threshold_image=image_threshold(inImage,&marker_size,nh);
+        //ROS_INFO_STREAM("marker_size " << marker_size);
         markers.clear();
+        //         if(debug_pub.getNumSubscribers() > 0)
+        // {
+        //   //show also the internal image resulting from the threshold operation
+        //   cv_bridge::CvImage debug_msg;
+        //   debug_msg.header.stamp = curr_stamp;
+        //   debug_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        //   debug_msg.image = inImage;
+        //   debug_pub.publish(debug_msg.toImageMsg());
+        // }
+        //ROS_INFO_STREAM("Marker size  " << marker_size);
         //Ok, let's detect
         mDetector.detect(inImage, markers, camParam, marker_size, false);
         //for each marker, draw info and its boundaries in the image
@@ -306,7 +314,7 @@ public:
 
         if(image_pub.getNumSubscribers() > 0)
         {
-          //show input with augmented information
+          //show simple_single with augmented information
           cv_bridge::CvImage out_msg;
           out_msg.header.stamp = curr_stamp;
           out_msg.encoding = sensor_msgs::image_encodings::RGB8;
@@ -314,15 +322,7 @@ public:
           image_pub.publish(out_msg.toImageMsg());
         }
 
-        if(debug_pub.getNumSubscribers() > 0)
-        {
-          //show also the internal image resulting from the threshold operation
-          cv_bridge::CvImage debug_msg;
-          debug_msg.header.stamp = curr_stamp;
-          debug_msg.encoding = sensor_msgs::image_encodings::MONO8;
-          debug_msg.image = mDetector.getThresholdedImage();
-          debug_pub.publish(debug_msg.toImageMsg());
-        }
+
       }
       catch (cv_bridge::Exception& e)
       {

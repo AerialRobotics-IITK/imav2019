@@ -150,14 +150,14 @@ public:
       if(r_area>y_area)
       {
         maskHSV = r_morphed;
-        obj_msg.color_int=0;
-        obj_msg.object_side=0.1;
+       obj_msg.color_int=0;
+       obj_msg.object_side=0.7;
       }
       else
       {
         maskHSV = y_morphed;
         obj_msg.color_int=2;
-        obj_msg.object_side=0.1;
+        obj_msg.object_side=0.7;
       }
     }
     else
@@ -166,13 +166,13 @@ public:
       {
         maskHSV = b_morphed;
         obj_msg.color_int=1;
-        obj_msg.object_side=0.1;
+        obj_msg.object_side=0.7;
       }
       else
       {
         maskHSV = y_morphed;
         obj_msg.color_int=2;
-        obj_msg.object_side=0.1;
+        obj_msg.object_side=0.7;
       }
     }
     

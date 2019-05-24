@@ -22,9 +22,9 @@ def tag_detect_node():
     rospy.spin()
 
 def tag_detection_cb(msg):
-    translation_x=rospy.get_param('input/translation/x')
-    translation_y=rospy.get_param('input/translation/y')
-    translation_z=rospy.get_param('input/translation/z')
+    translation_x=rospy.get_param('/simple_single/translation/x')
+    translation_y=rospy.get_param('/simple_single/translation/y')
+    translation_z=rospy.get_param('/simple_single/translation/z')
 
     pos_x = msg.pose.position.x
     pos_y = msg.pose.position.y
