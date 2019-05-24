@@ -13,9 +13,9 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 
 ### Testing
 - [ ] MPC tuning for Flamewheel (KDE+Pixhawk)
-- [ ] Benchmarking vision modules with aruco
+- [X] Benchmarking vision modules with aruco
 - [X] ArUco marker based landing
-- [ ] Deployment of detection module
+- [X] Deployment of detection module
 - [ ] Mailbox preparation
 - [ ] DroneNet video recording
 
