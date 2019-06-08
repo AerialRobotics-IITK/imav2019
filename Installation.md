@@ -1,5 +1,6 @@
-# 
+# IMAV software Stack
 
+## Installation Process
 ```shell
 sudo apt-get install python-catkin-tools ros-kinetic-control-toolbox ros-kinetic-octomap-ros ros-kinetic-octomap-msgs ros-kinetic-geographic-msgs libgeographic-dev liblapacke-dev ros-kinetic-mavlink 
 ```
@@ -21,6 +22,18 @@ sudo apt-get install python-catkin-tools ros-kinetic-control-toolbox ros-kinetic
 * mav_utils_ariitk: https://github.com/gajena/mav_utils_ariitk
   ```shell 
   git clone https://github.com/gajena/mav_utils_ariitk 
+  ```
+## mavros
+* mavros: https://github.com/AerialRobotics-IITK/mavros
+ * Branch: ARIITK
+  ```shell 
+  git clone https://github.com/AerialRobotics-IITK/mavros
+  ```
+  
+## Tfmini LiDaR
+* mavros: https://github.com/TFmini/TFmini-ROS
+  ```shell 
+  git clone https://github.com/TFmini/TFmini-ROS
   ```
  
 ## Misc
