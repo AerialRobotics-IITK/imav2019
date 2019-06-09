@@ -6,13 +6,21 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 ## Current Tasks
 
 ### Immediate (HIGH PRIORITY)
-- [ ] **PROPOSAL**
+- imav_sim repository update (GN)
+- [X] **PROPOSAL**
 - [ ] 4I 3D Printing
 - [ ] NUC repair
 - [X] Budget Proposal Submission
 
 ### Testing
-- [ ] MPC tuning for Flamewheel (KDE+Pixhawk)
+- [ ] H-detector (TS+KK+AD)
+    - [ ] Update
+    - [ ] Clean
+    - [ ] Push
+    - [ ] Deploy
+- [ ] Vision testing (GN+AS)
+- [ ] **Odroid benchmarking** (PM+PC)
+- [X] MPC tuning for Flamewheel (KDE+Pixhawk)
 - [X] Benchmarking vision modules with aruco
 - [X] ArUco marker based landing
 - [X] Deployment of detection module
@@ -20,6 +28,8 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [ ] DroneNet video recording
 
 ### Software
+- [ ] Avoidance (GN+PM)
+- [ ] Trajectory Generation (PM)
 - Mapping
     - [ ] Data collection
 - Detection
@@ -27,9 +37,10 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - Multimaster
     - [X] Eliminate GUI
 - Odroid
-    - [ ] Downgrade ROS and OS
-- House detection
+    - [X] Downgrade ROS and OS
+- House detection (AS)
     - [ ] Build model
+    - [ ] Create dataset
 - DroneNet
     - [ ] Transform to global coordinates
 
@@ -38,18 +49,20 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [ ] Gripper Design
 
 ### Non-Technical
+- [ ] Purchases (PC+PM)
+- [ ] Finance update + Bills (PC+PM)
 - [ ] Sponsor Emails
 - [ ] Normal Bills
-- [ ] Registration
+- [X] Registration
 - [ ] Team Video Template
 - [ ] NUC payment feedback
 - [ ] List reliable purchase sources (online and local)
-- [ ] DoRD $$$ 
+- [ ] DoRD $$$ (Pence)
 
 ## To Buy/Get
 - [X] Antenna-based Wifi Module
 - [ ] Wifi router
-- [ ] eMMC Reader
+- [X] eMMC Reader
 - [ ] KDE Boxes
 - [ ] Arduino Nano
 - [ ] Jetson carrier board
@@ -57,8 +70,8 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 
 ## Final Adjustments
 - Detection 
-    - [ ] Handling illumidnation variance
-    - [ ] Improve thresholding
+    - [X] Handling illumination variance
+    - [X] Improve thresholding
     - [ ] Size based checks on detected objects
 
 - Landing
@@ -72,7 +85,8 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [ ] Servo control via PixHawk
 - [ ] TFMini feedback through PixHawk
 - [ ] Thresholding using a lot of CPU
-- [ ] **Ironman crash cause** (most probably ESC Calibration)
+- [D] **Ironman crash cause** (most probably ESC Calibration)
+- [ ] catkin_simple : importing custom external packages fails (CMake cannot find them)
 
 ### Solved
 (Add solved issues and a reference/short description of the solution here to help in documentation later.)
@@ -80,11 +94,13 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
     Publish current odometry before going to offboard.  
 - *USB Cam not working on Odroid with ROS Melodic and Ubuntu 18.04* :
     Downgrade to ROS Kinetic and Ubuntu 16.04
+- [?] Eigen gives quad to global rotation matrix instead of global to quad(which is expected)
+- HSV values change everytime : switched off auto-exposure
 
 ## References
 (Maintain a list of references here that would be useful for documentation later.)
 #### Misc. References (To be documented in detail later)
-- [Catkin WOrkspace Config](https://catkin-tools.readthedocs.io/en/latest/verbs/catkin_config.html)
+- [Catkin Workspace Config](https://catkin-tools.readthedocs.io/en/latest/verbs/catkin_config.html)
 #### Planner
 - [Boost MSM Documentation](https://www.boost.org/doc/libs/1_64_0/libs/msm/doc/HTML/index.html)
 - [ETHZ MAV Control - State Machine Implementation](https://github.com/ethz-asl/mav_control_rw/tree/master/mav_control_interface/src)
