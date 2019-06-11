@@ -1,0 +1,3 @@
+[submodule "imav_detector"]
+	path = imav_detector
+	url = https://github.com/ashwin2802/imav_detector.git
