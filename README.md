@@ -8,27 +8,31 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 ### Immediate (HIGH PRIORITY)
 - imav_sim repository update (GN)
 - [X] **PROPOSAL**
-- [ ] 4I 3D Printing
-- [ ] NUC repair
+- [X] 4I 3D Printing
+- ~~[ ] NUC repair~~
 - [X] Budget Proposal Submission
 
 ### Testing
 - [ ] H-detector (TS+KK+AD)
-    - [ ] Update
-    - [ ] Clean
-    - [ ] Push
-    - [ ] Deploy
-- [ ] Vision testing (GN+AS)
+    - [X] Update
+    - [X] Clean
+    - [X] Push
+    - [X] Deploy
+    - [ ] Floodfill
+    - [ ] Slope Matching
+    - [ ] Benchmark
+    - [ ] High-speed datasets
+- [ ] Vision testing with 3D mailbox (GN+AS)
 - [ ] **Odroid benchmarking** (PM+PC)
 - [X] MPC tuning for Flamewheel (KDE+Pixhawk)
 - [X] Benchmarking vision modules with aruco
 - [X] ArUco marker based landing
 - [X] Deployment of detection module
-- [ ] Mailbox preparation
+- [X] Mailbox preparation
 - [ ] DroneNet video recording
 
 ### Software
-- [ ] Avoidance (GN+PM)
+- [ ] Avoidance (GN+PM+AS) 
 - [ ] Trajectory Generation (PM)
 - Mapping
     - [ ] Data collection
@@ -49,33 +53,39 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [ ] Gripper Design
 
 ### Non-Technical
-- [ ] Purchases (PC+PM)
+- [ ] Purchases (PC+PM+AP)
 - [ ] Finance update + Bills (PC+PM)
 - [ ] Sponsor Emails
 - [ ] Normal Bills
 - [X] Registration
 - [ ] Team Video Template
-- [ ] NUC payment feedback
+- [X] NUC payment feedback
 - [ ] List reliable purchase sources (online and local)
-- [ ] DoRD $$$ (Pence)
+- [X] DoRD $$$ (Pence)
 
 ## To Buy/Get
 - [X] Antenna-based Wifi Module
 - [ ] Wifi router
 - [X] eMMC Reader
-- [ ] KDE Boxes
-- [ ] Arduino Nano
-- [ ] Jetson carrier board
-- [ ] Flamewheel 450 or other frame
+- [X] KDE Boxes
+- [X] Arduino Nano
+- [X] Jetson carrier board
+- [X] Flamewheel 450 or other frame
+- [ ] Lidar
 
 ## Final Adjustments
 - Detection 
     - [X] Handling illumination variance
     - [X] Improve thresholding
-    - [ ] Size based checks on detected objects
+    - [X] Size based checks on detected objects
 
 - Landing
     - [ ] Parameters
+
+## Lectures
+- MAVLink Protocol
+- Transformations
+- 
 
 ## Issues
 
@@ -86,7 +96,7 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [ ] TFMini feedback through PixHawk
 - [ ] Thresholding using a lot of CPU
 - [D] **Ironman crash cause** (most probably ESC Calibration)
-- [ ] catkin_simple : importing custom external packages fails (CMake cannot find them)
+- [X] catkin_simple : importing custom external packages fails (CMake cannot find them)
 
 ### Solved
 (Add solved issues and a reference/short description of the solution here to help in documentation later.)
