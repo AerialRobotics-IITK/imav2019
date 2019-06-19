@@ -114,6 +114,8 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 #### Planner
 - [Boost MSM Documentation](https://www.boost.org/doc/libs/1_64_0/libs/msm/doc/HTML/index.html)
 - [ETHZ MAV Control - State Machine Implementation](https://github.com/ethz-asl/mav_control_rw/tree/master/mav_control_interface/src)
+#### MultiMaster
+- [multimaster_fkie for IMAV](https://github.com/parekhaman1807/multimaster_fkie)
 #### DroneNet
 - [YOLO](https://pjreddie.com/darknet/yolo/)
 - [DroneNet on YOLO](https://github.com/chuanenlin/drone-net/)
