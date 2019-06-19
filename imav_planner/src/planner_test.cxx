@@ -1,4 +1,4 @@
-#include "planner_test.h"
+#include <imav_planner/planner_test.h>
 
 int main(int argc, char **argv)
 {

@@ -1,9 +1,18 @@
-#include "planner.h"
+#include <imav_planner/planner.h>
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "planner");
     ros::NodeHandle nh;
+
+    nh.getParam("planner/height/hover", hover_height);
+    nh.getParam("planner/height/drop", drop_height);
+    nh.getParam("planner/height/land", land_height);
+    
+    nh.getParam("planner/servo/open", open_angle);
+    nh.getParam("planner/servo/close", close_angle);
+    nh.getParam("planner/servo/static", eq_angle);
+
     ros::Rate loopRate(0.2);    
     state_machine::fsm_ machine;
 

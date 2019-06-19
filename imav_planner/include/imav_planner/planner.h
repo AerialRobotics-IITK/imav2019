@@ -32,19 +32,19 @@
 
 // storage variables
 nav_msgs::Odometry mav_pose_;
-imav_planner::task_info home_info_, drop_info_;
+imav_planner::task_info drop_info_, home_info;
 std_msgs::Bool gripper_status_;
 std::string mode_;
 
 // height params - tuned for tfmini
-const double hover_height = 4.0;
-const double drop_height = 1.2;
-const double land_height = 0.41;
+double hover_height = 4.0;
+double drop_height = 1.2;
+double land_height = 0.41;
 
 // servo angles
-const uint open_angle = 40;
-const uint close_angle = 140;
-const uint eq_angle = 90;
+uint open_angle = 40;
+uint close_angle = 140;
+uint eq_angle = 90;
 
 // Rates
 
@@ -287,7 +287,7 @@ namespace state_machine
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
             ros::ServiceClient takeoff_client_ = nh_.serviceClient<std_srvs::Empty>("takeoff");
-            ros::Subscriber odom_sub_ = nh_.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber odom_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::UInt16>("servo", 1);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
 
@@ -378,9 +378,9 @@ namespace state_machine
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
             ros::Subscriber state_sub_ = nh_.subscribe("pilot/state", 1, state_cb_);
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::ServiceClient set_mode_client = nh_.serviceClient<mavros_msgs::SetMode>("pilot/set_mode");
-            ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 1, drop_info_cb_);\
+            ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 1, drop_info_cb_);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
 
             mavros_msgs::SetMode mission_set_mode, offb_set_mode;
@@ -504,7 +504,7 @@ namespace state_machine
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
             // ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 1, drop_info_cb_);
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 50);
             
             geometry_msgs::PoseStamped command_msg;
@@ -551,7 +551,7 @@ namespace state_machine
             ros::NodeHandle nh_ = cmd.nh;
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
 
             double curr_x, curr_y, curr_z=0;
@@ -602,7 +602,7 @@ namespace state_machine
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
             ros::Subscriber home_info_sub_ = nh_.subscribe("home_info", 1, home_info_cb_);
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
 
             geometry_msgs::PoseStamped command_msg;
@@ -663,7 +663,7 @@ namespace state_machine
             ros::NodeHandle nh_ = cmd.nh;
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
             
             double curr_x, curr_y, curr_z=0;
@@ -712,7 +712,7 @@ namespace state_machine
             ros::NodeHandle nh_ = cmd.nh;
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
             
             double curr_x, curr_y, curr_z=0;
@@ -779,7 +779,7 @@ namespace state_machine
 
         bool isAtLZ(ros::NodeHandle nh)
         {
-            ros::Subscriber mav_pose_sub_ = nh.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
 
@@ -815,7 +815,7 @@ namespace state_machine
 
         bool isAtMB(ros::NodeHandle nh)
         {
-            ros::Subscriber mav_pose_sub_ = nh.subscribe("tfmini_odom", 10, mav_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
 
