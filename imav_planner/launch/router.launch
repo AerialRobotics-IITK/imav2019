@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+   
+    <arg name="mav_name" default="spedix"/>
+    <arg name="red_name" default="spedix"/>
+    <arg name="yellow_name" default="f450"/>
+    <arg name="blue_name" default="magnus"/>
+   
+    <group ns="$(arg mav_name)">
+   
+        <node pkg="imav_planner" type="router" name="router" output="screen">
+            
+            <param name="mavName" value="$(arg mav_name)"/>
+            <param name="redName" value="$(arg red_name)"/>
+            <param name="yellowName" value="$(arg yellow_name)"/>
+            <param name="blueName" value="$(arg blue_name)"/>
+
+            <remap from="red" to="/$(arg red_name)/object_poses"/>
+            <remap from="yellow" to="/$(arg yellow_name)/object_poses"/>
+            <remap from="blue" to="/$(arg blue_name)/object_poses"/>
+   
+            <remap from="task" to="task_info"/>
+
+        </node>
+   
+    </group>
+    
+</launch>

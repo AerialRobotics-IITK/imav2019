@@ -32,7 +32,7 @@
 
 // storage variables
 nav_msgs::Odometry mav_pose_;
-imav_planner::task_info drop_info_, home_info;
+imav_planner::task_info drop_info_, home_info_;
 std_msgs::Bool gripper_status_;
 std::string mode_;
 
@@ -42,12 +42,14 @@ double drop_height = 1.2;
 double land_height = 0.41;
 
 // servo angles
-uint open_angle = 40;
-uint close_angle = 140;
-uint eq_angle = 90;
+double open_angle = 40;
+double close_angle = 140;
+double eq_angle = 90;
 
 // Rates
-
+double hover_time = 5.0;
+double transition_time = 5.0;
+double wait_time = 20.0;
 
 // callback functions
 
@@ -71,7 +73,6 @@ void state_cb_(const mavros_msgs::State::ConstPtr &msg)
 {
     mode_ = msg->mode;
 }
-
 
 // state machine definition
 
@@ -276,7 +277,6 @@ namespace state_machine
         // initial state declaration
         typedef Rest initial_state;
 
-
         // state transition functions
 
         void TakeOff(CmdTakeOff const & cmd)
@@ -414,7 +414,7 @@ namespace state_machine
                 if(mav_pose_.pose.pose.position.x < -0.5 && mav_pose_.pose.pose.position.y < -0.5)            // LZ positions
                 {
                     echo("   Reached LZ, mission over.")
-				PkgAttached=false;
+				    PkgAttached=false;
                     if(!PkgAttached)
                     {
                         echo("   No package attached, switching from Mission mode");
@@ -541,7 +541,6 @@ namespace state_machine
             }
             echo("   published recursively");
 
-
             return;
         }
 
@@ -631,7 +630,7 @@ namespace state_machine
         {
             echo(" Hovering");
 
-            ros::Rate hoverRate(0.2);
+            ros::Rate hoverRate(1.0/hover_time);
             hoverRate.sleep();            
         }
 

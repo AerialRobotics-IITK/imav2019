@@ -2,7 +2,13 @@ height:
   hover: 4.0
   drop: 0.60
   land: 0.31
+
 servo:
   open: 40
   close: 140
   static: 90
+
+delay:
+  transition: 5.0
+  hover: 5.0
+  pitStop: 20.0

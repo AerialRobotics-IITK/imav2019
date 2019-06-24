@@ -1,12 +1,21 @@
 <launch>
-    <group ns="spedix">
+    <arg name="mav_name" default="spedix"/>
+
+    <group ns="$(arg mav_name)">
+
         <node name="planner" pkg="imav_planner" type="planner" output="screen" clear_params="true">
-            <rosparam file="$(find imav_planner)/cfg/planner.yaml" />
+
+            <param name="mavName" value="$(arg mav_name)"/>
+            <rosparam file="$(find imav_planner)/cfg/planner.yaml" command="load"/>
+
             <remap from="odometry" to="odom"/>
             <remap from="drop_info" to="drop_info"/>
             <remap from="home_info" to="home_info"/>
             <remap from="state" to="pilot/state"/>
             <remap from="servo" to="servo"/>
+
         </node>
+
     </group>
+
 </launch>
