@@ -1,0 +1,12 @@
+<launch>
+    <group ns="spedix">
+        <node name="planner2" pkg="imav_planner" type="planner2" output="screen" clear_params="true">
+            <rosparam file="$(find imav_planner)/cfg/planner.yaml" />
+            <remap from="odometry" to="odom"/>
+            <remap from="drop_info" to="drop_info"/>
+            <remap from="home_info" to="home_info"/>
+            <remap from="state" to="pilot/state"/>
+            <remap from="servo" to="servo"/>
+        </node>
+    </group>
+</launch>
