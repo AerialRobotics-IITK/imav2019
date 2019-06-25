@@ -1,4 +1,4 @@
   Header header
   string loc_type
-  string mavName
+  string mav_name
   geometry_msgs/Point position
