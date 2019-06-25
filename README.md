@@ -18,8 +18,8 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
     - [X] Clean
     - [X] Push
     - [X] Deploy
-    - [ ] Floodfill
-    - [ ] Slope Matching
+    - [X] Floodfill
+    - [X] Slope Matching
     - [ ] Benchmark
     - [ ] High-speed datasets
 - [ ] Vision testing with 3D mailbox (GN+AS)
@@ -54,12 +54,12 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 
 ### Non-Technical
 - [ ] Purchases (PC+PM+AP)
-- [ ] Finance update + Bills (PC+PM)
+- [X] Finance update + Bills (PC+PM)
 - [ ] Sponsor Emails
 - [ ] Normal Bills
 - [X] Registration
 - [ ] Team Video Template
-- [X] NUC payment feedback
+- [X] NxUC payment feedback
 - [ ] List reliable purchase sources (online and local)
 - [X] DoRD $$$ (Pence)
 
