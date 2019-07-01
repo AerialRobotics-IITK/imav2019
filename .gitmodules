@@ -1,3 +1,6 @@
 [submodule "imav_detector"]
 	path = imav_detector/detector
 	url = https://github.com/ashwin2802/imav_detector
+[submodule "mav_utils_ariitk"]
+	path = mav_utils_ariitk
+	url = https://github.com/gajena/mav_utils_ariitk
