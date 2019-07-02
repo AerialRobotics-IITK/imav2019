@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="enable_logging" default="false"/>
+  <arg name="enable_ground_truth" default="true"/>
+  <arg name="paused" value="false"/>
+	<arg name="calibration_offset" default="-0.0008"/>
+	<arg name="cam_fps" default="20"/>
+    <arg name="expose_us" default="500"/>
+    <arg name="device" default="26807376"/>
+    <arg name="indoor" default="false"/>
+    <!-- <arg name="fcu_url_vio" default="/dev/ttyACM1:921600" /> -->
+    <arg name="fcu_url_pilot" default="udp://:14540@localhost:14557" />
+    <arg name="gcs_url_pilot" default="" />
+    <!-- <arg name="gcs_url_vio" default="udp://@172.27.20.73:14550" /> -->
+    <arg name="fcu_protocol" default="v2.0" />
+    <arg name="log_output_mavros" default="log" />
+    <arg name="respawn_mavros" default="false" />
+    <arg name="2k_exp" default="true"/>
+    <arg name="4k_exp" default="false"/>
+    <arg name="20k_exp" default="false"/>
+    <arg name="markerId"        default="582"/>
+    <arg name="markerSize"      default="0.11"/>    <!-- in m -->
+    <arg name="eye"             default="left"/>
+    <arg name="marker_frame"    default="aruco_marker_frame"/>
+    <arg name="ref_frame"       default=""/>  <!-- leave empty and the pose will be published wrt param parent_name -->
+    <arg name="corner_refinement" default="LINES" /> <!-- NONE, HARRIS, LINES, SUBPIX -->
+
+     <!-- PX4 configs -->
+    <arg name="interactive" default="true"/>
+    <!-- PX4 SITL -->
+    <arg unless="$(arg interactive)" name="px4_command_arg1" value="-d"/>
+    <arg if="$(arg interactive)" name="px4_command_arg1" value=""/>
+
+   <arg name="est" default="ekf2"/>
+<arg name="vehicle" default="iris"/>
+<env name="PX4_SIM_MODEL" value="$(arg vehicle)" />
+    <env name="PX4_ESTIMATOR" value="$(arg est)" />
+  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find imav_env)/models"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find imav_env)/models"/>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find imav_env)/worlds/outdoor_imav.world"/>
+    <!-- <arg name="debug" value="true"/> -->
+    <arg name="paused" value="$(arg paused)"/>
+    <!-- <arg name="gui" value="false"/> -->
+  </include>
+
+  <!-- <node name="sitl" pkg="px4" type="px4" output="screen"
+        args="$(find px4)/ROMFS/px4fmu_common -s etc/init.d-posix/rcS $(arg px4_command_arg1)" required="true"/> -->
+
+  <!-- Yellow -->
+  <group ns="magnus">
+
+    <!-- <include file="$(find imav_env)/launch/spawn_mav.launch">
+      <arg name="mav_name" value="magnus" />
+      <arg name="enable_logging" value="$(arg enable_logging)" />
+      <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+      <arg name="log_file" value="firefly"/>
+      <arg name="y" value="-2.0"/>
+    </include> -->
+
+     <node name="mav_nonlinear_mpc" pkg="mav_nonlinear_mpc" type="nonlinear_mpc_node" respawn="true" clear_params="true" output="log">
+      <remap from="odometry" to="ground_truth/odometry" />
+      <rosparam file="$(find mav_nonlinear_mpc)/resources/nonlinear_mpc_firefly.yaml" />
+      <rosparam file="$(find mav_disturbance_observer)/resources/disturbance_observer_firefly.yaml"/>
+      <param name="use_rc_teleop" value="false"/>
+      <param name="verbose" value="true" />
+      <param name="reference_frame" value="world"/>
+    </node>
+
+    
+    <node pkg="mavros" type="mavros_node" name="pilot" required="$(eval not respawn_mavros)" clear_params="true" output="$(arg log_output_mavros)" respawn="$(arg respawn_mavros)">
+			<param name="fcu_url" value="$(arg fcu_url_pilot)" />
+			<param name="gcs_url" value="$(arg gcs_url_pilot)" />
+			<param name="fcu_protocol" value="$(arg fcu_protocol)" />
+			<rosparam command="load" file="$(find mav_utils)/cfg/mavros/px4_pluginlists.yaml" />
+			<rosparam command="load" file="$(find mav_utils)/cfg/mavros/px4_config.yaml" />
+		</node>
+    
+    <node name="PID_attitude_controller" pkg="mav_lowlevel_attitude_controller" type="mav_pid_attitude_controller_node" respawn="true" clear_params="true" output="log">
+      <remap from="odometry" to="ground_truth/odometry" />
+      <rosparam file="$(find mav_lowlevel_attitude_controller)/resources/PID_attitude_firefly.yaml" />
+    </node>
+    
+    <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="log" args="0 0 6 0 5"/>
+    
+    <node name="gripper" pkg="imav_env" type="gripper_control" output="log" />
+    
+    <node name="planner" pkg="imav_planner" type="planner" output="log">
+        <param name="mavName" value="magnus"/>
+        <rosparam file="$(find imav_planner)/cfg/planner.yaml" command="load"/>
+        <remap from="odometry" to="ground_truth/odometry"/>
+        <remap from="drop_info" to="drop_info"/>
+        <remap from="home_info" to="home_info"/>
+        <remap from="state" to="pilot/state"/>
+        <remap from="servo" to="gripper_status"/>
+    </node>
+    
+    <node pkg="imav_planner" type="router" output="screen" name="router" >
+        <remap from="objects" to="/object_poses"/>
+        <remap from="helipad" to="hdetect/helipad_position"/>
+        <remap from="task" to="drop_info"/>
+        <param name="colour" value="yellow"/>
+    </node>
+    
+    <node pkg="helipad_det" type="hdetect" output="screen" name="hdetect" >
+        <rosparam file="$(find helipad_det)/cfg/params.yaml" command="load"/>
+        <remap from="usb_cam/image_raw" to="nadir_cam/image_raw"/>
+        <remap from="odom" to="ground_truth/odometry"/>
+        <remap from="rectified_image" to="nadir_cam/image_raw" />
+    </node>
+    
+    <node name="detector" pkg="detector" type="detector_node" output="screen">
+        <rosparam file="$(find detector)/cfg/detector.yaml" command="load"/>
+        <rosparam file="$(env HOME)/.ros/camera_info/head_camera.yaml"/>
+        <remap from="image" to="nadir_cam/image_raw"/>
+        <remap from="odometry" to="ground_truth/odometry"/>
+        <remap from="object_poses" to="/object_poses"/>
+        <remap from="bounding_boxes" to="bounding_boxes"/>
+    </node>
+  </group>
+
+</launch>

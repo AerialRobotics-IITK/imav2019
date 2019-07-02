@@ -1,12 +1,13 @@
+<?xml version="1.0"?>
 <launch>
   <arg name="enable_logging" default="false"/>
   <arg name="enable_ground_truth" default="true"/>
   <arg name="paused" value="false"/>
 
-  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find imav_sim)/models"/>
-  <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find imav_sim)/models"/>
+  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find imav_env)/models"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find imav_env)/models"/>
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find imav_sim)/worlds/outdoor_imav.world"/>
+    <arg name="world_name" value="$(find imav_env)/worlds/outdoor_imav.world"/>
     <!-- <arg name="debug" value="true"/> -->
     <arg name="paused" value="$(arg paused)"/>
     <!-- <arg name="gui" value="false"/> -->
@@ -14,7 +15,7 @@
 
   <!-- Yellow -->
   <group ns="magnus">
-    <include file="$(find imav_sim)/launch/spawn_mav.launch">
+    <include file="$(find imav_env)/launch/spawn_mav.launch">
       <arg name="mav_name" value="magnus" />
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
@@ -34,12 +35,12 @@
       <rosparam file="$(find mav_lowlevel_attitude_controller)/resources/PID_attitude_firefly.yaml" />
     </node>
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="log" args="0 0 6 0 5"/>
-    <node name="gripper" pkg="imav_sim" type="gripper_control" output="log" />
+    <node name="gripper" pkg="imav_env" type="gripper_control" output="log" />
   </group>
   
   <!-- Orange -->
   <group ns="vega">
-    <include file="$(find imav_sim)/launch/spawn_mav.launch">
+    <include file="$(find imav_env)/launch/spawn_mav.launch">
       <arg name="mav_name" value="vega" />
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
@@ -59,12 +60,12 @@
       <rosparam file="$(find mav_lowlevel_attitude_controller)/resources/PID_attitude_firefly.yaml" />
     </node>
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="log" args="0 1 6 0 5"/>
-    <node name="gripper" pkg="imav_sim" type="gripper_control" output="log" />
+    <node name="gripper" pkg="imav_env" type="gripper_control" output="log" />
   </group>
 
   <!-- Red -->
   <group ns="icarus">
-    <include file="$(find imav_sim)/launch/spawn_mav.launch">
+    <include file="$(find imav_env)/launch/spawn_mav.launch">
       <arg name="mav_name" value="icarus" />
       <arg name="enable_logging" value="$(arg enable_logging)" />
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
@@ -84,7 +85,7 @@
       <rosparam file="$(find mav_lowlevel_attitude_controller)/resources/PID_attitude_firefly.yaml" />
     </node>
     <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher" output="log" args="0 -1 6 0 5"/>
-    <node name="gripper" pkg="imav_sim" type="gripper_control" output="log" />
+    <node name="gripper" pkg="imav_env" type="gripper_control" output="log" />
   </group>
 
 </launch>
