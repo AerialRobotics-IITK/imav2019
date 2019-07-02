@@ -10,6 +10,7 @@
             
             <param name="colour" value="$(arg pkg_colour)"/>
             <remap from="objects" to="/object_poses"/>
+            <remap from="helipad" to="hdetect/helipad_position"/>
             <remap from="task" to="task_info"/>
 
         </node>
