@@ -6,9 +6,11 @@
 #include <std_srvs/Empty.h>
 #include <std_msgs/UInt16.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/String.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <mav_utils_msgs/signal.h>
+#include <future>
 
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/back/mpl_graph_fsm_check.hpp>
@@ -91,10 +93,10 @@ namespace state_machine
         CmdTakeOff(ros::NodeHandle nh_):nh(nh_){}
     };
 
-    struct CmdExplored
+    struct CmdExploring
     {
         ros::NodeHandle nh;
-        CmdExplored(ros::NodeHandle nh_) : nh(nh_) {}
+        CmdExploring(ros::NodeHandle nh_) : nh(nh_) {}
     };
 
     struct CmdGotoLZ
@@ -156,7 +158,8 @@ namespace state_machine
 
     struct fsm :  public msm::front::state_machine_def <fsm>
     {
-        
+        typedef msm::active_state_switch_before_transition active_state_switch_policy;
+
         template <class Event, class FSM>
         void on_entry(Event const&, FSM& )
         {
@@ -201,18 +204,18 @@ namespace state_machine
             }
         };
 
-        struct Explored : public msm::front::state<>
+        struct Exploring : public msm::front::state<>
         {
             template <class Event, class FSM>
             void on_entry(Event const &, FSM &)
             {
-                echo("Entered Explored state");
+                echo("Entered Exploring state");
             }
 
             template <class Event, class FSM>
             void on_exit(Event const &, FSM &)
             {
-                echo("Exited Explored state");
+                echo("Exited Exploring state");
             }
         };
 
@@ -288,21 +291,21 @@ namespace state_machine
             ros::NodeHandle nh_ = cmd.nh;
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
-            ros::ServiceClient takeoff_client_ = nh_.serviceClient<std_srvs::Empty>("takeoff");
+            // ros::ServiceClient takeoff_client_ = nh_.serviceClient<std_srvs::Empty>("takeoff");
             ros::Subscriber odom_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::Bool>("servo", 1);
-            ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
+            // ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
 
             // std_msgs::Bool angle_msg;
             // echo("  Setting servo angle");
             // angle_msg.data = close_angle;
-            // echo("   Publishing servo command");
+            echo("   Publishing servo command");
             std_msgs::Bool angle_msg;
             angle_msg.data = true;
             gripper_pub_.publish(angle_msg);
-            // echo("   Published servo command");
+            echo("   Published servo command");
             
-            echo("  Servo angle set to " << angle_msg.data);
+            echo("  Servo angle set to " << (int) angle_msg.data);
 
             double start_height=0;
             echo("  Waiting for first odometry message");
@@ -314,67 +317,67 @@ namespace state_machine
             }
             echo("  Got first odometry message");
 
-            double target_height = start_height + 1.0;
-            // might need to relax target_height to account for noise
-            std_srvs::Empty takeoff_msg;
-            if (takeoff_client_.call(takeoff_msg))
-            {
-                echo("  Taking off");
-            }
-            else
-            {
-                ROS_ERROR("Failed to takeoff");
-            }
+            // double target_height = start_height + 1.0;
+            // // might need to relax target_height to account for noise
+            // std_srvs::Empty takeoff_msg;
+            // if (takeoff_client_.call(takeoff_msg))
+            // {
+            //     echo("  Taking off");
+            // }
+            // else
+            // {
+            //     ROS_ERROR("Failed to takeoff");
+            // }
 
-            while(mav_pose_.pose.pose.position.z < target_height)
-            {
-                ros::spinOnce();
-                loopRate.sleep();
-            }
+            // while(mav_pose_.pose.pose.position.z < target_height)
+            // {
+            //     ros::spinOnce();
+            //     loopRate.sleep();
+            // }
 
-            echo("  Takeoff achieved");
+            // echo("  Takeoff achieved");
 
-            double curr_x, curr_y, curr_z=0;
-            bool AscentDone = false;
+            // double curr_x, curr_y, curr_z=0;
+            // bool AscentDone = false;
 
-            geometry_msgs::PoseStamped command_msg;
-            echo("  Waiting for odometry");
-            while(curr_z==0)
-            {
-                ros::spinOnce();
-                curr_x = mav_pose_.pose.pose.position.x;
-                curr_y = mav_pose_.pose.pose.position.y;
-                curr_z = mav_pose_.pose.pose.position.z;
-                loopRate.sleep();
-            }
-            echo("  Received odometry");
+            // geometry_msgs::PoseStamped command_msg;
+            // echo("  Waiting for odometry");
+            // while(curr_z==0)
+            // {
+            //     ros::spinOnce();
+            //     curr_x = mav_pose_.pose.pose.position.x;
+            //     curr_y = mav_pose_.pose.pose.position.y;
+            //     curr_z = mav_pose_.pose.pose.position.z;
+            //     loopRate.sleep();
+            // }
+            // echo("  Received odometry");
 
-            command_msg.header.stamp = ros::Time::now();
-            // command_msg.header.frame_id = "map";
-            command_msg.pose.position.x = mav_pose_.pose.pose.position.x;
-            command_msg.pose.position.y = mav_pose_.pose.pose.position.y;
-            command_msg.pose.position.z = hover_height;
-            command_msg.pose.orientation = mav_pose_.pose.pose.orientation;
+            // command_msg.header.stamp = ros::Time::now();
+            // // command_msg.header.frame_id = "map";
+            // command_msg.pose.position.x = mav_pose_.pose.pose.position.x;
+            // command_msg.pose.position.y = mav_pose_.pose.pose.position.y;
+            // command_msg.pose.position.z = hover_height;
+            // command_msg.pose.orientation = mav_pose_.pose.pose.orientation;
 
-            echo("  Starting ascent");
+            // echo("  Starting ascent");
             
-            sleepRate.sleep();
-            command_pub_.publish(command_msg);
+            // sleepRate.sleep();
+            // command_pub_.publish(command_msg);
 
-            while(!AscentDone)
-            {
-                ros::spinOnce();
-                curr_z = mav_pose_.pose.pose.position.z; 
-                AscentDone = (curr_z < hover_height) ? false : true;
-                loopRate.sleep();
-            }
-            echo("  Ascent done");
+            // while(!AscentDone)
+            // {
+            //     ros::spinOnce();
+            //     curr_z = mav_pose_.pose.pose.position.z; 
+            //     AscentDone = (curr_z < hover_height) ? false : true;
+            //     loopRate.sleep();
+            // }
+            // echo("  Ascent done");
 
             PkgAttached = true;
             return;
         }
 
-        void Exploring(CmdExplored const & cmd) 
+        void Explore(CmdExploring const & cmd) 
         {
             echo(" Exploring");
 
@@ -400,18 +403,19 @@ namespace state_machine
             mission_set_mode.request.custom_mode = "AUTO.MISSION";
             bool mode_set_= false;
 
-            echo("  Changing mode from Offboard");                                                           // Add state check
+            echo("  Changing mode to Mission");                                                           // Add state check
             while (!mode_set_)
             {
                 ros::spinOnce();
-                if(mode_=="OFFBOARD")
-                {
+                // if(mode_=="OFFBOARD")
+                // {
                     if (set_mode_client.call(mission_set_mode) && mission_set_mode.response.mode_sent)
                     {
                         echo("   Mission enabled");
                         mode_set_=true;
                     }
-                }
+                // }
+                loopRate.sleep();
             }
             echo("  Changed mode to Mission");
 
@@ -459,6 +463,7 @@ namespace state_machine
                                 echo("    Offboard enabled");
                                 mode_set_ = false;
                             }
+                            loopRate.sleep();
                         }
                         echo("   Switched to Offboard");
 
@@ -502,6 +507,7 @@ namespace state_machine
                     echo("   Offboard enabled");
                     mode_set_ = false;
                 }
+                loopRate.sleep();
             }
             echo("  Switched to Offboard");
 
@@ -528,6 +534,7 @@ namespace state_machine
                 while(drop_info_.loc_type != "Drop")
                 {
                     ros::spinOnce();
+                    loopRate.sleep();
                 }
             }
             echo("  Received drop location");
@@ -622,6 +629,7 @@ namespace state_machine
             while(home_info_.loc_type != "Home")
             {
                 ros::spinOnce();
+                loopRate.sleep();
             }
             echo("  Home location received");
 
@@ -927,7 +935,7 @@ namespace state_machine
             }
         }
 
-        bool ExecMission(CmdExplored const &){
+        bool ExecMission(CmdExploring const &){
             if(ContMission)
             {
                 echo(" Executing Mission");
@@ -962,12 +970,12 @@ namespace state_machine
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
                 a_row<    Rest          ,  CmdTakeOff   ,  Hover         ,  &fsm::TakeOff                               >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
-                  row<    Hover         ,  CmdExplored  ,  Explored      ,  &fsm::Exploring   ,  &fsm::ExecMission      >,
+                  row<    Hover         ,  CmdExploring ,  Exploring     ,  &fsm::Explore     ,  &fsm::ExecMission      >,
                   row<    Hover         ,  CmdGotoDrop  ,  ReachMailbox  ,  &fsm::GotoDrop    ,  &fsm::HasPkg           >,
                 a_row<    Hover         ,  CmdDescent   ,  Descent       ,  &fsm::Descending                            >,
                   row<    Hover         ,  CmdGotoLZ    ,  ReachLZ       ,  &fsm::GotoLZ      ,  &fsm::StopMission      >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
-                a_row<    Explored      ,  CmdHover     ,  Hover         ,  &fsm::Hovering                              >,
+                a_row<    Exploring      ,  CmdHover     ,  Hover        ,  &fsm::Hovering                              >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
                   row<    ReachMailbox  ,  CmdHover     ,  Hover         ,  &fsm::Hovering    ,  &fsm::ReachedMailbox   >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
@@ -990,7 +998,7 @@ namespace state_machine
     // state list
     static char const *const state_names[] = {"Rest",
                                             "Hover",
-                                            "Explored",
+                                            "Exploring",
                                             "ReachMailbox",
                                             "Descent",
                                             "Drop",
@@ -1000,6 +1008,19 @@ namespace state_machine
     void curr_state(fsm_ const& msg)
     {
         echo("Current state -- " << state_names[msg.current_state()[0]]);
+    }
+
+    void statePublish(ros::NodeHandle nh, fsm_ *fsm)
+    {
+        ros::Publisher statePub = nh.advertise<std_msgs::String>("curr_state", 10);
+        ros::Rate pubRate(10);
+        std_msgs::String msg;
+        while(ros::ok())
+        {
+            msg.data = state_names[fsm->current_state()[0]];
+            statePub.publish(msg);
+            pubRate.sleep();
+        }
     }
 
 }

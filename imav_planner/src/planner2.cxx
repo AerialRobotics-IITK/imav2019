@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 
     while (state_machine::ContMission)
     {
-        transitRate.sleep();       machine.process_event(state_machine::CmdExplored(nh));     state_machine::curr_state(machine);
+        transitRate.sleep();       machine.process_event(state_machine::CmdExploring(nh));     state_machine::curr_state(machine);
         transitRate.sleep();       machine.process_event(state_machine::CmdHover(nh));         state_machine::curr_state(machine);
 
         if(state_machine::PkgAttached)

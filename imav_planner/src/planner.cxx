@@ -20,7 +20,11 @@ int main(int argc, char **argv)
     ros::Rate transitRate(1.0/transition_time);    
     state_machine::fsm_ machine;
 
-    machine.start();        machine.process_event(state_machine::CmdTakeOff(nh));       state_machine::curr_state(machine);
+    machine.start();    
+
+    auto state = std::async(std::launch::async, state_machine::statePublish, nh, &machine);
+
+    machine.process_event(state_machine::CmdTakeOff(nh));       state_machine::curr_state(machine);
 
 // /*
     // Execution loop
@@ -28,7 +32,7 @@ int main(int argc, char **argv)
     while(state_machine::ContMission)
     {
 
-        transitRate.sleep();       machine.process_event(state_machine::CmdExplored(nh));     state_machine::curr_state(machine);
+        transitRate.sleep();       machine.process_event(state_machine::CmdExploring(nh));     state_machine::curr_state(machine);
         transitRate.sleep();       machine.process_event(state_machine::CmdHover(nh));         state_machine::curr_state(machine);
 
         if(state_machine::PkgAttached)
