@@ -12,7 +12,7 @@
             <remap from="drop_info" to="drop_info"/>
             <remap from="home_info" to="home_info"/>
             <remap from="state" to="pilot/state"/>
-            <remap from="servo" to="servo"/>
+            <remap from="servo" to="gripper_status"/>
 
         </node>
 

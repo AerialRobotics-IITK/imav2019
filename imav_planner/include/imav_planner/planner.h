@@ -2,11 +2,13 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Bool.h>
-#include <imav_planner/task_info.h>
+#include <mav_utils_msgs/TaskInfo.h>
 #include <std_srvs/Empty.h>
 #include <std_msgs/UInt16.h>
+#include <std_msgs/Bool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
+#include <mav_utils_msgs/signal.h>
 
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/back/mpl_graph_fsm_check.hpp>
@@ -32,7 +34,7 @@
 
 // storage variables
 nav_msgs::Odometry mav_pose_;
-imav_planner::task_info drop_info_, home_info_;
+mav_utils_msgs::TaskInfo drop_info_, home_info_;
 std_msgs::Bool gripper_status_;
 std::string mode_;
 
@@ -58,12 +60,12 @@ void mav_pose_cb_(const nav_msgs::Odometry &msg)
     mav_pose_ = msg;
 }
 
-void home_info_cb_(const imav_planner::task_info &msg)
+void home_info_cb_(const mav_utils_msgs::TaskInfo &msg)
 {
     home_info_ = msg;
 }
 
-void drop_info_cb_(const imav_planner::task_info &msg)
+void drop_info_cb_(const mav_utils_msgs::TaskInfo &msg)
 {
     drop_info_ = msg;
     // echo("Drop location: x = " << drop_info_.position.x << ", y = " << drop_info_.position.y);
@@ -288,13 +290,15 @@ namespace state_machine
             ros::Rate sleepRate(1);
             ros::ServiceClient takeoff_client_ = nh_.serviceClient<std_srvs::Empty>("takeoff");
             ros::Subscriber odom_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
-            ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::UInt16>("servo", 1);
+            ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::Bool>("servo", 1);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
 
-            std_msgs::UInt16 angle_msg;
-            echo("  Setting servo angle");
-            angle_msg.data = close_angle;
+            // std_msgs::Bool angle_msg;
+            // echo("  Setting servo angle");
+            // angle_msg.data = close_angle;
             // echo("   Publishing servo command");
+            std_msgs::Bool angle_msg;
+            angle_msg.data = true;
             gripper_pub_.publish(angle_msg);
             // echo("   Published servo command");
             
@@ -382,6 +386,14 @@ namespace state_machine
             ros::ServiceClient set_mode_client = nh_.serviceClient<mavros_msgs::SetMode>("pilot/set_mode");
             ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 1, drop_info_cb_);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
+            ros::ServiceClient node_client = nh_.serviceClient<mav_utils_msgs::signal>("detector/terminate");
+
+            mav_utils_msgs::signal start;
+            start.request.signal = 1;
+            if(node_client.call(start) && start.response.success)
+            {
+                echo("  Started detector node");
+            }
 
             mavros_msgs::SetMode mission_set_mode, offb_set_mode;
             offb_set_mode.request.custom_mode = "OFFBOARD";
@@ -641,12 +653,14 @@ namespace state_machine
             ros::NodeHandle nh_ = cmd.nh;
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
-            ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::UInt16>("servo", 1);
+            ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::Bool>("servo", 1);
             
-            std_msgs::UInt16 angle_msg;
-            echo("  Setting servo angle");
-            angle_msg.data = open_angle;
+            // std_msgs::UInt16 angle_msg;
+            // echo("  Setting servo angle");
+            // angle_msg.data = open_angle;
 
+            std_msgs::Bool angle_msg;
+            angle_msg.data = false;
             gripper_pub_.publish(angle_msg);
             
             echo("  Servo angle set to " << angle_msg.data);
@@ -712,8 +726,23 @@ namespace state_machine
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
             ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
+            ros::Subscriber heli_sub_ = nh_.subscribe("drop_info", 10, drop_info_cb_);
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
-            
+            ros::ServiceClient detector_client = nh_.serviceClient<mav_utils_msgs::signal>("detector/terminate");
+            ros::ServiceClient helipad_client = nh_.serviceClient<mav_utils_msgs::signal>("hdetect/terminate");
+
+            mav_utils_msgs::signal stop, start;
+            stop.request.signal = 0;
+            start.request.signal = 1;
+            if(detector_client.call(stop) && stop.response.success)
+            {
+                echo("  detector node stopped");
+            }
+            if(helipad_client.call(start) && start.response.success)
+            {
+                echo("  hdetect node started");
+            }
+
             double curr_x, curr_y, curr_z=0;
             bool LandingDone = false;
             
@@ -760,15 +789,15 @@ namespace state_machine
             ros::NodeHandle nh_ = cmd.nh;
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
-            ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::UInt16>("servo", 1);
+            // ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::Bool>("servo", 1);
             
-            std_msgs::UInt16 angle_msg;
-            echo("  Setting servo angle");
-            angle_msg.data = eq_angle;
+            // std_msgs::UInt16 angle_msg;
+            // echo("  Setting servo angle");
+            // angle_msg.data = eq_angle;
 
-            gripper_pub_.publish(angle_msg);
+            // gripper_pub_.publish(angle_msg);
 
-            echo("  Servo angle set to " << angle_msg.data);
+            // echo("  Servo angle set to " << angle_msg.data);
             
             PkgAttached = false;
             return;

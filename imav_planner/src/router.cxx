@@ -1,21 +1,21 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Point.h>
-#include <imav_planner/task_info.h>
-#include <detector_msgs/BBPoses.h>
-#include <detector_msgs/BBPose.h>
+#include <mav_utils_msgs/TaskInfo.h>
+#include <mav_utils_msgs/BBPoses.h>
+#include <mav_utils_msgs/BBPose.h>
 
 std::string colour;
-detector_msgs::BBPoses objects;
+mav_utils_msgs::BBPoses objects;
 int id = 0;
 
-void objCallback(const detector_msgs::BBPoses& msg)
+void objCallback(const mav_utils_msgs::BBPoses& msg)
 {
     objects = msg;
 }
 
 void publishMsg(std::string mav_name, geometry_msgs::Point position, ros::Publisher *pubPtr, std::string loc_type)
 {
-    imav_planner::task_info msg;
+    mav_utils_msgs::TaskInfo msg;
     msg.header.stamp = ros::Time::now();
     msg.loc_type = loc_type;
     msg.mav_name = mav_name;
@@ -24,11 +24,12 @@ void publishMsg(std::string mav_name, geometry_msgs::Point position, ros::Publis
     return;
 }
 
-void createTasks(detector_msgs::BBPoses *obj, ros::Publisher *pubPtr)
+void createTasks(mav_utils_msgs::BBPoses *obj, ros::Publisher *pubPtr)
 {
     for(int i=0; i < obj->object_poses.size(); i++)
     {
         if(obj->object_poses.at(i).type == id) publishMsg(obj->mav_name, obj->object_poses.at(i).position, pubPtr, "Drop");
+        else if(obj->object_poses.at(i).type == -1) publishMsg(obj->mav_name, obj->object_poses.at(i).position, pubPtr, "Land");
     }
     return;
 }
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
     else if(colour == "blue") id = -30;
 
     ros::Subscriber objSub = nh.subscribe("objects", 10, objCallback);
-    ros::Publisher taskPub = nh.advertise<imav_planner::task_info>("task", 1);
+    ros::Publisher taskPub = nh.advertise<mav_utils_msgs::TaskInfo>("task", 1);
     ros::Rate loopRate(10);
 
     while(ros::ok())
