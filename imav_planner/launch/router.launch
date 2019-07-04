@@ -2,16 +2,23 @@
 <launch>
    
     <arg name="mav_name" default="spedix"/>
-    <arg name="pkg_colour" default="red"/>
    
     <group ns="$(arg mav_name)">
    
-        <node pkg="imav_planner" type="router" name="router" output="screen">
+        <node name="router" pkg="imav_planner" type="router" output="screen">
             
-            <param name="colour" value="$(arg pkg_colour)"/>
-            <remap from="objects" to="/object_poses"/>
-            <remap from="helipad" to="hdetect/helipad_position"/>
-            <remap from="task" to="task_info"/>
+            <!-- parameters -->
+            <rosparam file="$(find imav_planner)/cfg/planner.yaml" command="load" ns="" />
+            <param name="mav_name" value="$(arg mav_name)"/>
+
+            <!-- subscribers -->
+            <remap from="objects" to="object_poses"/>
+            <remap from="curr_state" to="planner/curr_state"/>
+            <remap from="global_pose" to="pilot/global_position/global"/>
+
+            <!-- publishers -->
+            <remap from="task" to="drop_info"/>
+            <remap from="data" to="data"/>
 
         </node>
    

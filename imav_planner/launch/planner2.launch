@@ -1,12 +1,36 @@
+<?xml version="1.0"?>
 <launch>
-    <group ns="spedix">
-        <node name="planner2" pkg="imav_planner" type="planner2" output="screen" clear_params="true">
-            <rosparam file="$(find imav_planner)/cfg/planner.yaml" />
+    
+    <arg name="mav_name" default="spedix"/>
+
+    <group ns="$(arg mav_name)">
+
+        <node name="planner" pkg="imav_planner" type="planner2" output="screen" clear_params="true">
+
+            <!-- parameters -->
+            <rosparam file="$(find imav_planner)/cfg/planner.yaml" command="load"/>
+
+            <!-- subscribers -->
             <remap from="odometry" to="odom"/>
             <remap from="drop_info" to="drop_info"/>
-            <remap from="home_info" to="home_info"/>
-            <remap from="state" to="pilot/state"/>
-            <remap from="servo" to="servo"/>
+            <remap from="home_info" to="pilot/home_position/home"/>
+            <remap from="object_poses" to="object_poses"/>
+            <remap from="helipad" to="hdetect/helipad_position"/>
+            <remap from="global_pose" to="pilot/global_position/global"/>
+
+            <!-- publishers -->
+            <remap from="planner/curr_state" to="planner/curr_state"/>
+            <remap from="servo" to="gripper_status"/>
+            <remap from="mission_info" to="mission_info"/>
+
+            <!-- service clients -->
+            <remap from="back_to_position_hold" to="back_to_position_hold"/>
+            <remap from="set_mode" to="pilot/set_mode"/>
+            <remap from="detector/terminate" to="detector/terminate"/>
+            <remap from="hdetect/terminate" to="hdetect/terminate"/>
+
         </node>
+
     </group>
+
 </launch>
