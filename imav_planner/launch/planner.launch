@@ -11,12 +11,13 @@
             <rosparam file="$(find imav_planner)/cfg/planner.yaml" command="load"/>
 
             <!-- subscribers -->
-            <remap from="odometry" to="odom"/>
+            <remap from="odometry" to="pilot/local_position/odom"/>
             <remap from="drop_info" to="drop_info"/>
             <remap from="home_info" to="pilot/home_position/home"/>
             <remap from="object_poses" to="object_poses"/>
             <remap from="helipad" to="hdetect/helipad_position"/>
             <remap from="global_pose" to="pilot/global_position/global"/>
+            <remap from="mission/reached" to="pilot/mission/reached"/>
 
             <!-- publishers -->
             <remap from="planner/curr_state" to="planner/curr_state"/>
@@ -26,6 +27,7 @@
             <!-- service clients -->
             <remap from="back_to_position_hold" to="back_to_position_hold"/>
             <remap from="set_mode" to="pilot/set_mode"/>
+            <remap from="mission/pull" to="pilot/mission/pull"/>
             <remap from="detector/terminate" to="detector/terminate"/>
             <remap from="hdetect/terminate" to="hdetect/terminate"/>
 

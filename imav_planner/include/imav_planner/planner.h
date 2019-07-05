@@ -13,6 +13,8 @@
 
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/HomePosition.h>
+#include <mavros_msgs/WaypointPull.h>
+#include <mavros_msgs/WaypointReached.h>
 #include <mavros_msgs/State.h>
 
 #include <mav_utils_msgs/TaskInfo.h>
@@ -46,6 +48,7 @@ sensor_msgs::NavSatFix global_pose_;
 mav_utils_msgs::BBPoses obj_data, helipad;
 mav_utils_msgs::TaskInfo drop_info_;
 mavros_msgs::HomePosition home_info_;
+mavros_msgs::WaypointReached prev_wp;
 std_msgs::Bool gripper_status_;
 
 // errors for location comparison
@@ -102,6 +105,11 @@ void helipad_cb_(const mav_utils_msgs::BBPoses &msg)
 void global_pose_cb_(const sensor_msgs::NavSatFix &msg)
 {
     global_pose_ = msg;
+}
+
+void wp_reached_cb_(const mavros_msgs::WaypointReached &msg)
+{
+    prev_wp = msg;
 }
 
 // state machine definition
@@ -180,11 +188,6 @@ namespace state_machine
     bool AtMailbox = false;
     bool ContMission = true;
     int numPackages = 0;
-
-    // rates
-    ros::Rate loopRate(10);  
-    ros::Rate sleepRate(1);
-    ros::Rate hoverRate(1.0/hover_time);
 
     // state machine object
 
@@ -323,6 +326,9 @@ namespace state_machine
             
             ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::Bool>("servo", 1);
 
+            ros::Rate loopRate(10);  
+            ros::Rate sleepRate(1);
+
             // std_msgs::Bool angle_msg;
             // if(verbose)    echo("  Setting servo angle");
             // angle_msg.data = close_angle;
@@ -349,12 +355,17 @@ namespace state_machine
             ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 1, drop_info_cb_);
             ros::Subscriber home_info_sub_ = nh_.subscribe("home_info", 1, home_info_cb_);
             ros::Subscriber global_pose_sub_ = nh_.subscribe("global_pose", 1, global_pose_cb_);
+            ros::Subscriber mission_wp_sub = nh_.subscribe("mission/reached", 10, wp_reached_cb_);
 
             ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
 
             ros::ServiceClient pose_hold_client = nh_.serviceClient<std_srvs::Empty>("back_to_position_hold");
             ros::ServiceClient set_mode_client = nh_.serviceClient<mavros_msgs::SetMode>("set_mode");
             ros::ServiceClient node_client = nh_.serviceClient<mav_utils_msgs::signal>("detector/terminate");
+            ros::ServiceClient mission_client = nh_.serviceClient<mavros_msgs::WaypointPull>("mission/pull");
+
+            ros::Rate loopRate(10);  
+            ros::Rate sleepRate(1);
 
             mav_utils_msgs::signal start;
             start.request.signal = 1;
@@ -380,6 +391,14 @@ namespace state_machine
                 loopRate.sleep();
             }
             if(verbose)   echo("  Received GPS position");
+
+            mavros_msgs::WaypointPull req;
+            int num_wp=0;
+            if(mission_client.call(req) && req.response.success)
+            {
+                if(verbose)     echo("  Received waypoints");
+                num_wp = req.response.wp_received - 1;
+            }
 
             mavros_msgs::SetMode mission_set_mode, offb_set_mode;
             offb_set_mode.request.custom_mode = "OFFBOARD";
@@ -408,30 +427,34 @@ namespace state_machine
                 ros::spinOnce();
 
                 // exit condition
-                if(sq(global_pose_.latitude - home_info_.geo.latitude) + sq(global_pose_.longitude - home_info_.geo.longitude) < gps_error)            // LZ positions
+                if(prev_wp.wp_seq == num_wp)
                 {
-                    if(verbose)   echo("   Reached LZ, mission over.");
-				    PkgAttached=false;
-
-                    if(!PkgAttached)
+                    if(verbose)     echo("  Reached last waypoint, validating GPS");
+                    if(sq(global_pose_.latitude - home_info_.geo.latitude) + sq(global_pose_.longitude - home_info_.geo.longitude) < gps_error)            // LZ positions
                     {
-                        if(verbose)   echo("   No package attached, switching from Mission mode");
-                        while (mode_set_)
-                        {
-                            if(pose_hold_client.call(pose_hold))
-                            {
-                                if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
-                                {
-                                    if(verbose)   echo("    Offboard enabled");
-                                    mode_set_ = false;
-                                }
-                            }
-                            loopRate.sleep();
-                        }
-                        if(verbose)   echo("   Switched to Offboard");
+                        if(verbose)   echo("   Reached LZ, mission over.");
+                        PkgAttached=false;
 
-                        ContMission = false;
-                        return;
+                        if(!PkgAttached)
+                        {
+                            if(verbose)   echo("   No package attached, switching from Mission mode");
+                            while (mode_set_)
+                            {
+                                if(pose_hold_client.call(pose_hold))
+                                {
+                                    if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
+                                    {
+                                        if(verbose)   echo("    Offboard enabled");
+                                        mode_set_ = false;
+                                    }
+                                }
+                                loopRate.sleep();
+                            }
+                            if(verbose)   echo("   Switched to Offboard");
+
+                            ContMission = false;
+                            return;
+                        }
                     }
                 }
 
@@ -475,6 +498,9 @@ namespace state_machine
             ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 10, drop_info_cb_);
             
             ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
+
+            ros::Rate loopRate(10);  
+            ros::Rate sleepRate(1);
 
             mav_utils_msgs::MissionInfo mission_msg;
             if(verbose)   echo("  Checking for drop location");
@@ -523,6 +549,9 @@ namespace state_machine
             ros::Subscriber obj_sub_ = nh_.subscribe("object_poses", 10, obj_cb_);
             
             ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
+
+            ros::Rate loopRate(10);  
+            ros::Rate sleepRate(1);
 
             double curr_x, curr_y, curr_z=0;
             bool DescentDone = false;
@@ -616,6 +645,9 @@ namespace state_machine
             
             ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
 
+            ros::Rate loopRate(10);  
+            ros::Rate sleepRate(1);
+
             mav_utils_msgs::MissionInfo mission_msg;
             home_info_.header.seq = 0;
             if(verbose)   echo("  Waiting for Home location");
@@ -640,6 +672,7 @@ namespace state_machine
         void Hovering(CmdHover const & cmd)
         {
             if(verbose)   echo(" Hovering");
+            ros::Rate hoverRate(1.0/hover_time);
             hoverRate.sleep();            
         }
 
@@ -673,7 +706,10 @@ namespace state_machine
             ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             
             ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
-            
+
+            ros::Rate loopRate(10);  
+            ros::Rate sleepRate(1);
+                        
             double curr_x, curr_y, curr_z=0;
             bool AscentDone = false;
 
@@ -724,6 +760,9 @@ namespace state_machine
             
             ros::ServiceClient detector_client = nh_.serviceClient<mav_utils_msgs::signal>("detector/terminate");
             ros::ServiceClient helipad_client = nh_.serviceClient<mav_utils_msgs::signal>("hdetect/terminate");
+
+            ros::Rate loopRate(10);
+            ros::Rate sleepRate(1);
 
             mav_utils_msgs::signal stop, start;
             stop.request.signal = 0;
@@ -813,6 +852,9 @@ namespace state_machine
             ros::Subscriber home_info_sub_ = nh.subscribe("home_info", 10, home_info_cb_);
             ros::Subscriber global_pose_sub_ = nh.subscribe("global_pose", 10, global_pose_cb_);
 
+            ros::Rate loopRate(10);
+            ros::Rate sleepRate(1);
+
             double dist = 0;
             bool AtLoc = false;
 
@@ -852,6 +894,9 @@ namespace state_machine
             ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
             ros::Subscriber drop_info_sub_ = nh.subscribe("drop_info", 10, drop_info_cb_);
             ros::Subscriber global_pose_sub_ = nh.subscribe("global_pose", 10, global_pose_cb_);
+
+            ros::Rate loopRate(10);
+            ros::Rate sleepRate(1);
 
             double dist = 0;
             double curr_x, curr_y, curr_z = 0;
@@ -1045,6 +1090,8 @@ namespace state_machine
     {
         ros::Publisher statePub = nh.advertise<std_msgs::String>("curr_state", 10);
         
+        ros::Rate loopRate(10);
+
         std_msgs::String msg;
         while(ros::ok())
         {

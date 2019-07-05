@@ -1,4 +1,4 @@
-debug: true
+verbose: true
 
 error:
   gps: 1
