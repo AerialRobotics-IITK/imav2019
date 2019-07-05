@@ -5,7 +5,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "planner");
     ros::NodeHandle nh, ph("~");
 
-    ph.getParam("debug", debug);
+    ph.getParam("verbose", verbose);
     
     ph.getParam("error/gps", gps_error);
     ph.getParam("error/local", loc_error);
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
     machine.process_event(state_machine::CmdTakeOff(nh));       
     
-    if(debug) state_machine::echo_state(machine);
+    if(verbose) state_machine::echo_state(machine);
 
 // /*
     // Execution loop
@@ -41,37 +41,37 @@ int main(int argc, char **argv)
     {
         transitRate.sleep();       
         machine.process_event(state_machine::CmdExploring(nh));    
-        if(debug)   state_machine::echo_state(machine);
+        if(verbose)   state_machine::echo_state(machine);
         
         transitRate.sleep();       
         machine.process_event(state_machine::CmdHover(nh));        
-        if(debug)   state_machine::echo_state(machine);
+        if(verbose)   state_machine::echo_state(machine);
 
         if(state_machine::PkgAttached)
         {   
             transitRate.sleep();       
             machine.process_event(state_machine::CmdGotoDrop(nh));      
-            if(debug)   state_machine::echo_state(machine); 
+            if(verbose)   state_machine::echo_state(machine); 
             
             transitRate.sleep();       
             machine.process_event(state_machine::CmdHover(nh));         
-            if(debug)   state_machine::echo_state(machine);
+            if(verbose)   state_machine::echo_state(machine);
             
             transitRate.sleep();       
             machine.process_event(state_machine::CmdDescent(nh));       
-            if(debug)   state_machine::echo_state(machine);
+            if(verbose)   state_machine::echo_state(machine);
             
             transitRate.sleep();       
             machine.process_event(state_machine::CmdDrop(nh));          
-            if(debug)   state_machine::echo_state(machine);
+            if(verbose)   state_machine::echo_state(machine);
             
             transitRate.sleep();       
             machine.process_event(state_machine::CmdDropOver(nh));      
-            if(debug)   state_machine::echo_state(machine);
+            if(verbose)   state_machine::echo_state(machine);
             
             transitRate.sleep();       
             machine.process_event(state_machine::CmdAscent(nh));        
-            if(debug)   state_machine::echo_state(machine);
+            if(verbose)   state_machine::echo_state(machine);
 
         }
     
@@ -79,19 +79,19 @@ int main(int argc, char **argv)
         
     // transitRate.sleep();       
     // machine.process_event(state_machine::CmdGotoLZ(nh));      
-    // if(debug)   state_machine::echo_state(machine);
+    // if(verbose)   state_machine::echo_state(machine);
     
     // transitRate.sleep();       
     // machine.process_event(state_machine::CmdHover(nh));       
-    // if(debug)   state_machine::echo_state(machine);
+    // if(verbose)   state_machine::echo_state(machine);
     
     transitRate.sleep();       
     machine.process_event(state_machine::CmdDescent(nh));     
-    if(debug)   state_machine::echo_state(machine);
+    if(verbose)   state_machine::echo_state(machine);
     
     transitRate.sleep();       
     machine.process_event(state_machine::CmdLand(nh));        
-    if(debug)   state_machine::echo_state(machine);
+    if(verbose)   state_machine::echo_state(machine);
 
                                                                                                                                         // */
 /* 
@@ -99,12 +99,12 @@ int main(int argc, char **argv)
     
     transitRate.sleep();       
     machine.process_event(state_machine::CmdDescent(nh));     
-    if(debug)   state_machine::echo_state(machine);
+    if(verbose)   state_machine::echo_state(machine);
     state_machine::ContMission = false;
     
     transitRate.sleep();       
     machine.process_event(state_machine::CmdLand(nh));        
-    if(debug)   state_machine::echo_state(machine);
+    if(verbose)   state_machine::echo_state(machine);
 
                                                                                                                                         */
     machine.stop();

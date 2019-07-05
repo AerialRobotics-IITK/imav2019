@@ -8,11 +8,14 @@
 #include <mav_utils_msgs/RouterInfo.h>
 #include <mav_utils_msgs/BBPoses.h>
 
+#define echo(x) std::cout << x << std::endl
+
 std::string mavName, names[3];
 std::string curr_state;
 sensor_msgs::NavSatFix globalPose;
 std::vector<mav_utils_msgs::RouterData> routerData[2];
 mav_utils_msgs::BBPoses obj_data;
+bool verbose = true;
 int id=-1;
 
 struct locData
@@ -135,7 +138,7 @@ void updateRouters(ros::Publisher *pub)
     pub->publish(info_msg);
 }
 
-void publishTask(ros::Publisher *pub, int id)
+void publishTask(ros::Publisher *pub)
 {
     if(curr_state != "Exploring") return;
     mav_utils_msgs::TaskInfo task;
@@ -200,6 +203,8 @@ int main(int argc, char** argv)
 
     ros::Rate loopRate(10);
     
+    ph.getParam("verbose", verbose);
+    ph.getParam("mav_name", mavName);
     ph.getParam("names/red", names[0]);
     ph.getParam("names/yellow", names[1]);
     ph.getParam("names/blue", names[2]);
@@ -209,7 +214,9 @@ int main(int argc, char** argv)
         if(mavName == names[i]) id = i+1;
     }
 
-    ros::NodeHandle routers[3] = {names[id-1], names[(id)%3], names[(id+1)%3]};
+    if(verbose) echo(id);
+
+    ros::NodeHandle routers[3] = {"/" + names[id-1], "/" + names[(id)%3], "/" + names[(id+1)%3]};
     
     ros::Subscriber objSub = routers[0].subscribe("objects", 10, objCallback);
     ros::Subscriber stateSub = routers[0].subscribe("curr_state", 10, stateCallback);
@@ -218,13 +225,13 @@ int main(int argc, char** argv)
     
     ros::Publisher routerPub = ph.advertise<mav_utils_msgs::RouterInfo>("data", 10);
     ros::Publisher taskPub = routers[0].advertise<mav_utils_msgs::TaskInfo>("task", 10);
-
+    
     while(ros::ok())
     {
         ros::spinOnce();
         updateTable();
         updateRouters(&routerPub);
-        publishTask(&taskPub, id);
+        publishTask(&taskPub);
         loopRate.sleep();
     }    
 
