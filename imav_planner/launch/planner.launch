@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     
-    <arg name="mav_name" default="spedix"/>
+    <arg name="mav_name" default="magnus"/>
 
     <group ns="$(arg mav_name)">
 
@@ -18,6 +18,7 @@
             <remap from="helipad" to="hdetect/helipad_position"/>
             <remap from="global_pose" to="pilot/global_position/global"/>
             <remap from="mission/reached" to="pilot/mission/reached"/>
+            <remap from="state" to="pilot/state" />
 
             <!-- publishers -->
             <remap from="planner/curr_state" to="planner/curr_state"/>
@@ -25,7 +26,7 @@
             <remap from="mission_info" to="mission_info"/>
 
             <!-- service clients -->
-            <remap from="back_to_position_hold" to="back_to_position_hold"/>
+            <!-- <remap from="back_to_position_hold" to="back_to_position_hold"/> -->
             <remap from="set_mode" to="pilot/set_mode"/>
             <remap from="mission/pull" to="pilot/mission/pull"/>
             <remap from="detector/terminate" to="detector/terminate"/>

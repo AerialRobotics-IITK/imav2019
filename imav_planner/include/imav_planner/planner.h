@@ -37,6 +37,8 @@
     -- check rates and queues for pub-sub objects
     -- add error margin for all position data comparisons
     -- would global pubbers/subbers work?
+    -- Info::Defining multiple publishers delayed the publisher setup; ref:GoToDrop issue
+    -- Mavros global commands
                                             */
 
 #define echo(X) std::cout << X << std::endl
@@ -49,11 +51,12 @@ mav_utils_msgs::BBPoses obj_data, helipad;
 mav_utils_msgs::TaskInfo drop_info_;
 mavros_msgs::HomePosition home_info_;
 mavros_msgs::WaypointReached prev_wp;
+mavros_msgs::State mav_mode_;
 std_msgs::Bool gripper_status_;
 
 // errors for location comparison
 double gps_error = 1.0;
-double loc_error = 1.0;
+double loc_error = 0.05;
 
 // verbose flag
 bool verbose = true;
@@ -62,7 +65,7 @@ bool verbose = true;
 double hover_height = 4.0;
 double drop_height = 1.2;
 double land_height = 0.41;
-double descent_step = 0.04;
+double descent_step = 0.4;
 
 // servo angles
 double open_angle = 40;
@@ -110,6 +113,11 @@ void global_pose_cb_(const sensor_msgs::NavSatFix &msg)
 void wp_reached_cb_(const mavros_msgs::WaypointReached &msg)
 {
     prev_wp = msg;
+}
+
+void state_cb_(const mavros_msgs::State &msg)
+{
+    mav_mode_ = msg;
 }
 
 // state machine definition
@@ -318,6 +326,8 @@ namespace state_machine
         typedef Rest initial_state;
 
         // state transition functions
+        ros::NodeHandle nh_;
+        ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
 
         void TakeOff(CmdTakeOff const & cmd)
         {
@@ -355,11 +365,13 @@ namespace state_machine
             ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 1, drop_info_cb_);
             ros::Subscriber home_info_sub_ = nh_.subscribe("home_info", 1, home_info_cb_);
             ros::Subscriber global_pose_sub_ = nh_.subscribe("global_pose", 1, global_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Subscriber mission_wp_sub = nh_.subscribe("mission/reached", 10, wp_reached_cb_);
+            ros::Subscriber state_sub_ = nh_.subscribe("state",1, state_cb_);
+            
+            
 
-            ros::Publisher command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("command/pose", 10);
-
-            ros::ServiceClient pose_hold_client = nh_.serviceClient<std_srvs::Empty>("back_to_position_hold");
+            // ros::ServiceClient pose_hold_client = nh_.serviceClient<std_srvs::Empty>("back_to_position_hold");
             ros::ServiceClient set_mode_client = nh_.serviceClient<mavros_msgs::SetMode>("set_mode");
             ros::ServiceClient node_client = nh_.serviceClient<mav_utils_msgs::signal>("detector/terminate");
             ros::ServiceClient mission_client = nh_.serviceClient<mavros_msgs::WaypointPull>("mission/pull");
@@ -367,6 +379,7 @@ namespace state_machine
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
 
+            mav_utils_msgs::MissionInfo mission_msg;
             mav_utils_msgs::signal start;
             start.request.signal = 1;
             if(node_client.call(start) && start.response.success)
@@ -422,10 +435,9 @@ namespace state_machine
 
             drop_info_.loc_type = "";
             if(verbose)   echo("  Searching for mailboxes");
-            while (drop_info_.loc_type != "Drop" || drop_info_.loc_type != "Hover")
+            while (drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
             {
                 ros::spinOnce();
-
                 // exit condition
                 if(prev_wp.wp_seq == num_wp)
                 {
@@ -440,13 +452,21 @@ namespace state_machine
                             if(verbose)   echo("   No package attached, switching from Mission mode");
                             while (mode_set_)
                             {
-                                if(pose_hold_client.call(pose_hold))
+                                mission_msg.header.stamp = ros::Time::now();
+                                mission_msg.use_local = false;
+                                mission_msg.use_nmpc = false;
+                                mission_msg.altitude = global_pose_.altitude;
+                                mission_msg.latitude = global_pose_.latitude;
+                                mission_msg.longitude = global_pose_.longitude;
+                                mission_msg.local_pose.x = mav_pose_.pose.pose.position.x;
+                                mission_msg.local_pose.y = mav_pose_.pose.pose.position.y;
+                                mission_msg.local_pose.z = mav_pose_.pose.pose.position.z;
+
+                                command_pub_.publish(mission_msg);
+
+                                if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
                                 {
-                                    if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
-                                    {
-                                        if(verbose)   echo("    Offboard enabled");
-                                        mode_set_ = false;
-                                    }
+                                    mode_set_ = false;
                                 }
                                 loopRate.sleep();
                             }
@@ -475,14 +495,29 @@ namespace state_machine
 
             while (mode_set_)
             {
-                if(pose_hold_client.call(pose_hold))
+                mission_msg.local_pose.x=0;
+                while(mission_msg.local_pose.x==0)
+                {
+                    ros::spinOnce();
+                    mission_msg.header.stamp = ros::Time::now();
+                    mission_msg.use_local = true;
+                    mission_msg.use_nmpc = false;
+                    mission_msg.local_pose.x = mav_pose_.pose.pose.position.x;
+                    mission_msg.local_pose.y = mav_pose_.pose.pose.position.y;
+                    mission_msg.local_pose.z = 8;
+                }
+
+                command_pub_.publish(mission_msg);
+                
+                while(mav_mode_.mode == "AUTO.MISSION")
                 {
                     if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
                     {
-                        if(verbose)   echo("   Offboard enabled");
                         mode_set_ = false;
                     }
+                    ros::spinOnce();
                 }
+                if(verbose)   echo("   Offboard enabled");
                 loopRate.sleep();
             }
             if(verbose)   echo("  Switched to Offboard");
@@ -496,17 +531,17 @@ namespace state_machine
             ros::NodeHandle nh_ = cmd.nh;
 
             ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 10, drop_info_cb_);
+            ros::Subscriber global_pose_sub_ = nh_.subscribe("global_pose", 1, global_pose_cb_);
+            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             
-            ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
-
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
 
             mav_utils_msgs::MissionInfo mission_msg;
             if(verbose)   echo("  Checking for drop location");
-            if(drop_info_.loc_type != "Drop" || drop_info_.loc_type != "Hover"){ 
+            if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){ 
                 if(verbose)   echo("  Waiting for drop location");
-                while(drop_info_.loc_type != "Drop" || drop_info_.loc_type != "Hover")
+                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
                 {
                     ros::spinOnce();
                     loopRate.sleep();
@@ -519,11 +554,12 @@ namespace state_machine
             if(drop_info_.is_local)
             {
                 mission_msg.use_local = true;
-                mission_msg.use_local = true;
+                mission_msg.use_nmpc = false;
                 mission_msg.local_pose.x = drop_info_.position.x;
                 mission_msg.local_pose.y = drop_info_.position.y;
                 mission_msg.local_pose.z = hover_height;
                 if(verbose)   echo("   Mission location: x = " << mission_msg.local_pose.x << ", y = " << mission_msg.local_pose.y << "type " << drop_info_.loc_type);
+
             }
             else
             {
@@ -534,7 +570,7 @@ namespace state_machine
                 mission_msg.longitude = drop_info_.longitude;
                 if(verbose)   echo("   Mission location: lat = " << mission_msg.latitude << ", lon = " << mission_msg.longitude << "type " << drop_info_.loc_type);
             }
-
+ 
             command_pub_.publish(mission_msg);
 
             return;
@@ -548,7 +584,7 @@ namespace state_machine
             ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Subscriber obj_sub_ = nh_.subscribe("object_poses", 10, obj_cb_);
             
-            ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
+            
 
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
@@ -558,9 +594,9 @@ namespace state_machine
             mav_utils_msgs::MissionInfo mission_msg;
 
             if(verbose)   echo("  Checking for drop location");
-            if(drop_info_.loc_type != "Drop" || drop_info_.loc_type != "Hover"){ 
+            if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){ 
                 if(verbose)   echo("  Waiting for drop location");
-                while(drop_info_.loc_type != "Drop" || drop_info_.loc_type != "Hover")
+                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
                 {
                     ros::spinOnce();
                     loopRate.sleep();
@@ -587,7 +623,7 @@ namespace state_machine
                 {
                     mission_msg.header.stamp = ros::Time::now();
                     mission_msg.use_local = true;
-                    mission_msg.use_nmpc = true;
+                    mission_msg.use_nmpc = false;
                     if(obj_data.object_poses.size()>0)
                     {
                         mission_msg.local_pose.x = obj_data.object_poses.at(0).position.x;
@@ -613,7 +649,7 @@ namespace state_machine
                 {
                     mission_msg.header.stamp = ros::Time::now();
                     mission_msg.use_local = true;
-                    mission_msg.use_nmpc = true;
+                    mission_msg.use_nmpc = false;
                     if(obj_data.object_poses.size()>0)
                     {
                         mission_msg.local_pose.x = obj_data.object_poses.at(0).position.x;
@@ -643,7 +679,7 @@ namespace state_machine
             
             ros::Subscriber home_info_sub_ = nh_.subscribe("home_info", 1, home_info_cb_);
             
-            ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
+            
 
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
@@ -705,7 +741,7 @@ namespace state_machine
             
             ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             
-            ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
+            
 
             ros::Rate loopRate(10);  
             ros::Rate sleepRate(1);
@@ -727,7 +763,7 @@ namespace state_machine
 
             mission_msg.header.stamp = ros::Time::now();
             mission_msg.use_local = true;
-            mission_msg.use_nmpc = true;
+            mission_msg.use_nmpc = false;
             mission_msg.local_pose.x = mav_pose_.pose.pose.position.x;
             mission_msg.local_pose.y = mav_pose_.pose.pose.position.y;
             mission_msg.local_pose.z = hover_height;
@@ -756,7 +792,7 @@ namespace state_machine
             ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
             ros::Subscriber heli_sub_ = nh_.subscribe("helipad", 10, helipad_cb_);
             
-            ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
+            
             
             ros::ServiceClient detector_client = nh_.serviceClient<mav_utils_msgs::signal>("detector/terminate");
             ros::ServiceClient helipad_client = nh_.serviceClient<mav_utils_msgs::signal>("hdetect/terminate");
@@ -805,7 +841,7 @@ namespace state_machine
             {
                 mission_msg.header.stamp = ros::Time::now();
                 mission_msg.use_local = true;
-                mission_msg.use_nmpc = true;
+                mission_msg.use_nmpc = false;
                 if(helipad.object_poses.size()>0)
                 {
                     mission_msg.local_pose.x = helipad.object_poses.at(0).position.x;
@@ -903,10 +939,10 @@ namespace state_machine
             bool AtLoc = false;
 
             if(verbose)   echo("  Checking for drop info");
-            if(drop_info_.loc_type != "Drop" || drop_info_.loc_type != "Hover")
+            if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
             {
                 if(verbose)   echo("  Waiting for drop location");
-                while(drop_info_.loc_type != "Drop" || drop_info_.loc_type != "Hover")
+                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
                 {
                     ros::spinOnce();
                     loopRate.sleep();
@@ -940,7 +976,7 @@ namespace state_machine
                 while(!AtLoc)
                 {
                     ros::spinOnce();
-                    dist = sq(mav_pose_.pose.pose.position.x - drop_info_.position.x) + sq(mav_pose_.pose.pose.position.y - drop_info_.position.y);
+                    dist = sq((mav_pose_.pose.pose.position.x - drop_info_.position.x)) + sq((mav_pose_.pose.pose.position.y - drop_info_.position.y));
                     AtLoc = (dist > loc_error) ? false : true;
                     loopRate.sleep();
                 }
