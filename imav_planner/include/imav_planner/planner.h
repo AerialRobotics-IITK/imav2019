@@ -292,10 +292,10 @@ namespace state_machine{
             if(verbose)   echo("  Mailbox detected, switching from Mission mode");
             if(verbose){
                 if(!drop_info_.is_local) echo("   Drop location: lat = " << drop_info_.latitude << ", lon = " << drop_info_.longitude);
-                else echo("   Drop location: x = " << drop_info_.position.x << ", lon = " << drop_info_.position.y);
+                else echo("   Drop location: x = " << drop_info_.position.x << ", y = " << drop_info_.position.y);
             }
 
-            drop_info_sub_.shutdown();
+            // drop_info_sub_.shutdown();
   
             // if(verbose)    echo("   Drop info subscriber shutdown");
             // if(verbose)    echo("   Drop location: x = " << drop_info_.position.x << ", y = " << drop_info_.position.y);
@@ -323,6 +323,7 @@ namespace state_machine{
             }
             if(verbose)   echo("  Switched to Offboard");
 
+            if(drop_info_.loc_type == "Hover") PkgAttached = true;
             return;
         }
 
