@@ -3,7 +3,7 @@
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "planner2");
-    ros::NodeHandle nh, ph("~");
+    ros::NodeHandle ph("~");
 
     ph.getParam("verbose", verbose);
     
@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     
     auto state = std::async(std::launch::async, state_machine::statePublish, ph, &machine);
 
-    machine.process_event(state_machine::CmdTakeOff(nh));      
+    machine.process_event(state_machine::CmdTakeOff());      
     
     if(verbose)   state_machine::echo_state(machine);
 
@@ -40,37 +40,37 @@ int main(int argc, char** argv)
     while (state_machine::ContMission)
     {
         transitRate.sleep();       
-        machine.process_event(state_machine::CmdExploring(nh));     
+        machine.process_event(state_machine::CmdExploring());     
         if(verbose)    state_machine::echo_state(machine);
         
         transitRate.sleep();       
-        machine.process_event(state_machine::CmdHover(nh));         
+        machine.process_event(state_machine::CmdHover());         
         if(verbose)    state_machine::echo_state(machine);
 
         if(state_machine::PkgAttached)
         {   
             transitRate.sleep();       
-            machine.process_event(state_machine::CmdGotoDrop(nh));      
+            machine.process_event(state_machine::CmdGotoDrop());      
             if(verbose)    state_machine::echo_state(machine); 
             
             transitRate.sleep();       
-            machine.process_event(state_machine::CmdHover(nh));         
+            machine.process_event(state_machine::CmdHover());         
             if(verbose)    state_machine::echo_state(machine);
             
             transitRate.sleep();       
-            machine.process_event(state_machine::CmdDescent(nh));       
+            machine.process_event(state_machine::CmdDescent());       
             if(verbose)    state_machine::echo_state(machine);
             
             transitRate.sleep();       
-            machine.process_event(state_machine::CmdDrop(nh));          
+            machine.process_event(state_machine::CmdDrop());          
             if(verbose)    state_machine::echo_state(machine);
             
             transitRate.sleep();       
-            machine.process_event(state_machine::CmdDropOver(nh));      
+            machine.process_event(state_machine::CmdDropOver());      
             if(verbose)    state_machine::echo_state(machine);
             
             transitRate.sleep();       
-            machine.process_event(state_machine::CmdAscent(nh));        
+            machine.process_event(state_machine::CmdAscent());        
             if(verbose)    state_machine::echo_state(machine);
             
             if(!state_machine::PkgAttached)
@@ -78,51 +78,51 @@ int main(int argc, char** argv)
                 state_machine::ContMission = false;
                 
                 transitRate.sleep();       
-                machine.process_event(state_machine::CmdGotoLZ(nh));        
+                machine.process_event(state_machine::CmdGotoLZ());        
                 if(verbose)   state_machine::echo_state(machine);
                 
                 transitRate.sleep();       
-                machine.process_event(state_machine::CmdHover(nh));         
+                machine.process_event(state_machine::CmdHover());         
                 if(verbose)    state_machine::echo_state(machine);
                 
                 transitRate.sleep();       
-                machine.process_event(state_machine::CmdDescent(nh));       
+                machine.process_event(state_machine::CmdDescent());       
                 if(verbose)    state_machine::echo_state(machine);
                 
                 transitRate.sleep();       
-                machine.process_event(state_machine::CmdLand(nh));          
+                machine.process_event(state_machine::CmdLand());          
                 if(verbose)    state_machine::echo_state(machine);
                 
                 waitRate.sleep();
                 
                 transitRate.sleep();       
-                machine.process_event(state_machine::CmdTakeOff(nh));       
+                machine.process_event(state_machine::CmdTakeOff());       
                 if(verbose)    state_machine::echo_state(machine);
                 
                 if(state_machine::PkgAttached)
                 {
                     transitRate.sleep();       
-                    machine.process_event(state_machine::CmdGotoDrop(nh));      
+                    machine.process_event(state_machine::CmdGotoDrop());      
                     if(verbose)    state_machine::echo_state(machine); 
                     
                     transitRate.sleep();       
-                    machine.process_event(state_machine::CmdHover(nh));         
+                    machine.process_event(state_machine::CmdHover());         
                     if(verbose)    state_machine::echo_state(machine);
                     
                     transitRate.sleep();       
-                    machine.process_event(state_machine::CmdDescent(nh));       
+                    machine.process_event(state_machine::CmdDescent());       
                     if(verbose)    state_machine::echo_state(machine);
                     
                     transitRate.sleep();       
-                    machine.process_event(state_machine::CmdDrop(nh));          
+                    machine.process_event(state_machine::CmdDrop());          
                     if(verbose)    state_machine::echo_state(machine);
                     
                     transitRate.sleep();       
-                    machine.process_event(state_machine::CmdDropOver(nh));      
+                    machine.process_event(state_machine::CmdDropOver());      
                     if(verbose)    state_machine::echo_state(machine);
                     
                     transitRate.sleep();       
-                    machine.process_event(state_machine::CmdAscent(nh));        
+                    machine.process_event(state_machine::CmdAscent());        
                     if(verbose)    state_machine::echo_state(machine);    
                 }
                 
@@ -130,22 +130,21 @@ int main(int argc, char** argv)
             }
         }
     }
-
     
     transitRate.sleep();       
-    machine.process_event(state_machine::CmdGotoLZ(nh));        
+    machine.process_event(state_machine::CmdGotoLZ());        
     if(verbose)   state_machine::echo_state(machine);
     
     transitRate.sleep();       
-    machine.process_event(state_machine::CmdHover(nh));         
+    machine.process_event(state_machine::CmdHover());         
     if(verbose)    state_machine::echo_state(machine);
     
     transitRate.sleep();       
-    machine.process_event(state_machine::CmdDescent(nh));       
+    machine.process_event(state_machine::CmdDescent());       
     if(verbose)    state_machine::echo_state(machine);
     
     transitRate.sleep();       
-    machine.process_event(state_machine::CmdLand(nh));          
+    machine.process_event(state_machine::CmdLand());          
     if(verbose)    state_machine::echo_state(machine);
 
     machine.stop();

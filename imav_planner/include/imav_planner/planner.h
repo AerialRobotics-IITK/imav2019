@@ -29,18 +29,6 @@
 #include <boost/msm/front/euml/common.hpp>
 #include <boost/msm/front/euml/operator.hpp>
 
-/* 
-    further progress
-    -- update exit mission condition
-    -- remove home_info and replace with planned home (pilot/home_location/home)
-    -- set dynamic reconfigure for height and angle params
-    -- check rates and queues for pub-sub objects
-    -- add error margin for all position data comparisons
-    -- would global pubbers/subbers work?
-    -- Info::Defining multiple publishers delayed the publisher setup; ref:GoToDrop issue
-    -- Mavros global commands
-                                            */
-
 #define echo(X) std::cout << X << std::endl
 #define sq(X) X*X
 
@@ -79,115 +67,34 @@ double wait_time = 20.0;
 
 // callback functions
 
-void mav_pose_cb_(const nav_msgs::Odometry &msg)
-{
-    mav_pose_ = msg;
-}
-
-void home_info_cb_(const mavros_msgs::HomePosition &msg)
-{
-    home_info_ = msg;
-}
-
-void drop_info_cb_(const mav_utils_msgs::TaskInfo &msg)
-{
-    drop_info_ = msg;
-    // echo("Drop location: x = " << drop_info_.position.x << ", y = " << drop_info_.position.y);
-}
-
-void obj_cb_(const mav_utils_msgs::BBPoses &msg)
-{
-    obj_data = msg;
-}
-
-void helipad_cb_(const mav_utils_msgs::BBPoses &msg)
-{
-    helipad = msg;
-}
-
-void global_pose_cb_(const sensor_msgs::NavSatFix &msg)
-{
-    global_pose_ = msg;
-}
-
-void wp_reached_cb_(const mavros_msgs::WaypointReached &msg)
-{
-    prev_wp = msg;
-}
-
-void state_cb_(const mavros_msgs::State &msg)
-{
-    mav_mode_ = msg;
-}
+void mav_pose_cb_(const nav_msgs::Odometry &msg){mav_pose_ = msg;}
+void home_info_cb_(const mavros_msgs::HomePosition &msg){home_info_ = msg;}
+void drop_info_cb_(const mav_utils_msgs::TaskInfo &msg){drop_info_ = msg;}
+void obj_cb_(const mav_utils_msgs::BBPoses &msg){obj_data = msg;}
+void helipad_cb_(const mav_utils_msgs::BBPoses &msg){helipad = msg;}
+void global_pose_cb_(const sensor_msgs::NavSatFix &msg){global_pose_ = msg;}
+void wp_reached_cb_(const mavros_msgs::WaypointReached &msg){prev_wp = msg;}
+void state_cb_(const mavros_msgs::State &msg){mav_mode_ = msg;}
 
 // state machine definition
 
-namespace state_machine
-{
+namespace state_machine{
+
     namespace msm = boost::msm;
     namespace mpl = boost::mpl;
 
     // state machine commands
 
-    struct CmdTakeOff
-    {
-        ros::NodeHandle nh;
-        CmdTakeOff(ros::NodeHandle nh_):nh(nh_){}
-    };
-
-    struct CmdExploring
-    {
-        ros::NodeHandle nh;
-        CmdExploring(ros::NodeHandle nh_) : nh(nh_) {}
-    };
-
-    struct CmdGotoLZ
-    {
-        ros::NodeHandle nh;
-        CmdGotoLZ(ros::NodeHandle nh_):nh(nh_){}
-    };
-
-    struct CmdDescent
-    {
-        ros::NodeHandle nh;
-        CmdDescent(ros::NodeHandle nh_):nh(nh_){}
-    };
-
-    struct CmdGotoDrop
-    {
-        ros::NodeHandle nh;
-        CmdGotoDrop(ros::NodeHandle nh_):nh(nh_){}
-    };
-
-    struct CmdAscent
-    {
-        ros::NodeHandle nh;
-        CmdAscent(ros::NodeHandle nh_):nh(nh_){}
-    };
-
-    struct CmdDrop
-    {
-        ros::NodeHandle nh;
-        CmdDrop(ros::NodeHandle nh_):nh(nh_){}
-    };
-
-    struct CmdLand
-    {
-        ros::NodeHandle nh;
-        CmdLand(ros::NodeHandle nh_):nh(nh_){}
-    };
-
-    struct CmdDropOver
-    {
-        ros::NodeHandle nh;
-        CmdDropOver(ros::NodeHandle nh_):nh(nh_){}
-    };
-    
-    struct CmdHover
-    {
-        ros::NodeHandle nh;
-        CmdHover(ros::NodeHandle nh_):nh(nh_){}
-    };
+    struct CmdTakeOff{CmdTakeOff(){}};
+    struct CmdExploring{CmdExploring(){}};
+    struct CmdGotoLZ{CmdGotoLZ(){}};
+    struct CmdDescent{CmdDescent(){}};
+    struct CmdGotoDrop{CmdGotoDrop(){}};
+    struct CmdAscent{CmdAscent(){}};
+    struct CmdDrop{CmdDrop(){}};
+    struct CmdLand{CmdLand(){}};
+    struct CmdDropOver{CmdDropOver(){}};
+    struct CmdHover{CmdHover(){}};
 
     // state variables
 
@@ -199,145 +106,77 @@ namespace state_machine
 
     // state machine object
 
-    struct fsm :  public msm::front::state_machine_def <fsm>
-    {
+    struct fsm :  public msm::front::state_machine_def <fsm>{
+
         typedef msm::active_state_switch_before_transition active_state_switch_policy;
 
-        template <class Event, class FSM>
-        void on_entry(Event const&, FSM& )
-        {
-            if(verbose)   echo("Entered state machine");
-        }
-
-        template <class Event, class FSM>
-        void on_exit(Event const &, FSM &)
-        {
-            if(verbose)   echo("Exited state machine");
-        }
+        template <class Event, class FSM> void on_entry(Event const&, FSM& ){if(verbose)   echo("Entered state machine");}
+        template <class Event, class FSM> void on_exit(Event const &, FSM &){if(verbose)   echo("Exited state machine");}
 
         // state definitions
 
-        struct Rest : public msm::front::state <>
-        {
-            template <class Event, class FSM>
-            void on_entry(Event const &, FSM &)
-            {
-                if(verbose)   echo("Entered Rest state");
-            }
-
-            template <class Event, class FSM>
-            void on_exit(Event const &, FSM &)
-            {
-                if(verbose)   echo("Exited Rest state");
-            }
+        struct Rest : public msm::front::state <>{
+            template <class Event, class FSM> void on_entry(Event const &, FSM &){if(verbose)   echo("Entered Rest state");}
+            template <class Event, class FSM> void on_exit(Event const &, FSM &){if(verbose)   echo("Exited Rest state");}
         };
-
-        struct Hover : public msm::front::state<>
-        {
-            template <class Event, class FSM>
-            void on_entry(Event const &, FSM &)
-            {
-                if(verbose)   echo("Entered Hover mode");
-            }
-
-            template <class Event, class FSM>
-            void on_exit(Event const &, FSM &)
-            {
-                if(verbose)   echo("Exited Hover mode");
-            }
+        struct Hover : public msm::front::state<>{
+            template <class Event, class FSM> void on_entry(Event const &, FSM &){if(verbose)   echo("Entered Hover mode");}
+            template <class Event, class FSM> void on_exit(Event const &, FSM &){if(verbose)   echo("Exited Hover mode");}
         };
-
         struct Exploring : public msm::front::state<>
         {
-            template <class Event, class FSM>
-            void on_entry(Event const &, FSM &)
-            {
-                if(verbose)   echo("Entered Exploring state");
-            }
-
-            template <class Event, class FSM>
-            void on_exit(Event const &, FSM &)
-            {
-                if(verbose)   echo("Exited Exploring state");
-            }
+            template <class Event, class FSM> void on_entry(Event const &, FSM &){if(verbose)   echo("Entered Exploring state");}
+            template <class Event, class FSM> void on_exit(Event const &, FSM &){if(verbose)   echo("Exited Exploring state");}
         };
-
-        struct ReachLZ : public msm::front::state<>
-        {
-            template <class Event, class FSM>
-            void on_entry(Event const &, FSM &)
-            {
-                if(verbose)   echo("Entered ReachingLZ state");
-            }
-
-            template <class Event, class FSM>
-            void on_exit(Event const &, FSM &)
-            {
-                if(verbose)   echo("Exited ReachingLZ state");
-            }
+        struct ReachLZ : public msm::front::state<>{
+            template <class Event, class FSM> void on_entry(Event const &, FSM &){if(verbose)   echo("Entered ReachingLZ state");}
+            template <class Event, class FSM> void on_exit(Event const &, FSM &){if(verbose)   echo("Exited ReachingLZ state");}
         };
-
-        struct ReachMailbox : public msm::front::state<>
-        {
-            template <class Event, class FSM>
-            void on_entry(Event const &, FSM &)
-            {
-                if(verbose)   echo("Entered Reaching_Mailbox state");
-            }
-
-            template <class Event, class FSM>
-            void on_exit(Event const &, FSM &)
-            {
-                if(verbose)   echo("Exited Reaching_Mailbox state");
-            }
+        struct ReachMailbox : public msm::front::state<>{
+            template <class Event, class FSM> void on_entry(Event const &, FSM &){if(verbose)   echo("Entered Reaching_Mailbox state");}
+            template <class Event, class FSM> void on_exit(Event const &, FSM &){if(verbose)   echo("Exited Reaching_Mailbox state");}
         };
-
-        struct Descent : public msm::front::state<>
-        {
-            template <class Event, class FSM>
-            void on_entry(Event const &, FSM &)
-            {
-                if(verbose)   echo("Entered Descent");
-            }
-
-            template <class Event, class FSM>
-            void on_exit(Event const &, FSM &)
-            {
-                if(verbose)   echo("Exited Descent");
-            } 
+        struct Descent : public msm::front::state<>{
+            template <class Event, class FSM> void on_entry(Event const &, FSM &){if(verbose)   echo("Entered Descent");}
+            template <class Event, class FSM> void on_exit(Event const &, FSM &){if(verbose)   echo("Exited Descent");} 
         };
-
-        struct Drop : public msm::front::state<>
-        {
-            template <class Event, class FSM>
-            void on_entry(Event const &, FSM &)
-            {
-                if(verbose)   echo("Entered Drop state");
-            }
-
-            template <class Event, class FSM>
-            void on_exit(Event const &, FSM &)
-            {
-                if(verbose)   echo("Exited Drop state");
-            }
+        struct Drop : public msm::front::state<>{
+            template <class Event, class FSM> void on_entry(Event const &, FSM &){if(verbose)   echo("Entered Drop state");}
+            template <class Event, class FSM> void on_exit(Event const &, FSM &){if(verbose)   echo("Exited Drop state");}
         };
 
         // initial state declaration
         typedef Rest initial_state;
 
+        // global node handle
+        ros::NodeHandle nh;
+
+        // publishers
+        ros::Publisher command_pub_ = nh.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
+        ros::Publisher gripper_pub_ = nh.advertise<std_msgs::Bool>("servo", 1);
+
+        // subscribers
+        ros::Subscriber drop_info_sub_ = nh.subscribe("drop_info", 1, drop_info_cb_);
+        ros::Subscriber home_info_sub_ = nh.subscribe("home_info", 1, home_info_cb_);
+        ros::Subscriber global_pose_sub_ = nh.subscribe("global_pose", 1, global_pose_cb_);
+        ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
+        ros::Subscriber mission_wp_sub = nh.subscribe("mission/reached", 10, wp_reached_cb_);
+        ros::Subscriber state_sub_ = nh.subscribe("state",1, state_cb_);
+        ros::Subscriber obj_sub_ = nh.subscribe("object_poses", 10, obj_cb_);
+        ros::Subscriber heli_sub_ = nh.subscribe("helipad", 10, helipad_cb_);    
+
+        //  service clients
+        ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("set_mode");
+        ros::ServiceClient node_client = nh.serviceClient<mav_utils_msgs::signal>("detector/terminate");
+        ros::ServiceClient mission_client = nh.serviceClient<mavros_msgs::WaypointPull>("mission/pull");
+        ros::ServiceClient detector_client = nh.serviceClient<mav_utils_msgs::signal>("detector/terminate");
+        ros::ServiceClient helipad_client = nh.serviceClient<mav_utils_msgs::signal>("hdetect/terminate");
+        // ros::ServiceClient pose_hold_client = nh.serviceClient<std_srvs::Empty>("back_to_position_hold");
+
         // state transition functions
-        ros::NodeHandle nh_;
-        ros::Publisher command_pub_ = nh_.advertise<mav_utils_msgs::MissionInfo>("mission_info", 10);
 
-        void TakeOff(CmdTakeOff const & cmd)
-        {
+        void TakeOff(CmdTakeOff const & cmd){
             if(verbose)   echo(" Starting execution");
-            ros::NodeHandle nh_ = cmd.nh;
-            
-            ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::Bool>("servo", 1);
-
-            ros::Rate loopRate(10);  
-            ros::Rate sleepRate(1);
 
             // std_msgs::Bool angle_msg;
             // if(verbose)    echo("  Setting servo angle");
@@ -357,40 +196,21 @@ namespace state_machine
             return;
         }
 
-        void Explore(CmdExploring const & cmd) 
-        {
+        void Explore(CmdExploring const & cmd){
             if(verbose)   echo(" Exploring");
-            ros::NodeHandle nh_ = cmd.nh;
-
-            ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 1, drop_info_cb_);
-            ros::Subscriber home_info_sub_ = nh_.subscribe("home_info", 1, home_info_cb_);
-            ros::Subscriber global_pose_sub_ = nh_.subscribe("global_pose", 1, global_pose_cb_);
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
-            ros::Subscriber mission_wp_sub = nh_.subscribe("mission/reached", 10, wp_reached_cb_);
-            ros::Subscriber state_sub_ = nh_.subscribe("state",1, state_cb_);
-            
-            
-
-            // ros::ServiceClient pose_hold_client = nh_.serviceClient<std_srvs::Empty>("back_to_position_hold");
-            ros::ServiceClient set_mode_client = nh_.serviceClient<mavros_msgs::SetMode>("set_mode");
-            ros::ServiceClient node_client = nh_.serviceClient<mav_utils_msgs::signal>("detector/terminate");
-            ros::ServiceClient mission_client = nh_.serviceClient<mavros_msgs::WaypointPull>("mission/pull");
-
-            ros::Rate loopRate(10);  
-            ros::Rate sleepRate(1);
+            ros::Rate loopRate(10);
 
             mav_utils_msgs::MissionInfo mission_msg;
+
             mav_utils_msgs::signal start;
             start.request.signal = 1;
-            if(node_client.call(start) && start.response.success)
-            {
+            if(node_client.call(start) && start.response.success){
                 if(verbose)   echo("  Started detector node");
             }
 
             home_info_.geo.latitude = 0;
             if(verbose)   echo("  Waiting for Home location");
-            while(home_info_.geo.latitude == 0)
-            {
+            while(home_info_.geo.latitude == 0){
                 ros::spinOnce();
                 loopRate.sleep();
             }
@@ -398,8 +218,7 @@ namespace state_machine
 
             global_pose_.latitude = 0;
             if(verbose)   echo("  Waiting for GPS position");
-            while(global_pose_.latitude == 0)
-            {
+            while(global_pose_.latitude == 0){
                 ros::spinOnce();
                 loopRate.sleep();
             }
@@ -407,8 +226,7 @@ namespace state_machine
 
             mavros_msgs::WaypointPull req;
             int num_wp=0;
-            if(mission_client.call(req) && req.response.success)
-            {
+            if(mission_client.call(req) && req.response.success){
                 if(verbose)     echo("  Received waypoints");
                 num_wp = req.response.wp_received - 1;
             }
@@ -421,11 +239,9 @@ namespace state_machine
             std_srvs::Empty pose_hold;
 
             if(verbose)   echo("  Changing mode to Mission");                                                           // Add state check
-            while (!mode_set_)
-            {
+            while (!mode_set_){
                 ros::spinOnce();
-                if (set_mode_client.call(mission_set_mode) && mission_set_mode.response.mode_sent)
-                {
+                if (set_mode_client.call(mission_set_mode) && mission_set_mode.response.mode_sent){
                     if(verbose)   echo("   Mission enabled");
                     mode_set_=true;
                 }
@@ -435,23 +251,19 @@ namespace state_machine
 
             drop_info_.loc_type = "";
             if(verbose)   echo("  Searching for mailboxes");
-            while (drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
-            {
+            while (drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){
                 ros::spinOnce();
+
                 // exit condition
-                if(prev_wp.wp_seq == num_wp)
-                {
+                if(prev_wp.wp_seq == num_wp){
                     if(verbose)     echo("  Reached last waypoint, validating GPS");
-                    if(sq(global_pose_.latitude - home_info_.geo.latitude) + sq(global_pose_.longitude - home_info_.geo.longitude) < gps_error)            // LZ positions
-                    {
+                    if(sq(global_pose_.latitude - home_info_.geo.latitude) + sq(global_pose_.longitude - home_info_.geo.longitude) < gps_error){
                         if(verbose)   echo("   Reached LZ, mission over.");
                         PkgAttached=false;
 
-                        if(!PkgAttached)
-                        {
+                        if(!PkgAttached){
                             if(verbose)   echo("   No package attached, switching from Mission mode");
-                            while (mode_set_)
-                            {
+                            while (mode_set_){
                                 mission_msg.header.stamp = ros::Time::now();
                                 mission_msg.use_local = false;
                                 mission_msg.use_nmpc = false;
@@ -464,10 +276,7 @@ namespace state_machine
 
                                 command_pub_.publish(mission_msg);
 
-                                if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
-                                {
-                                    mode_set_ = false;
-                                }
+                                if(set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) mode_set_ = false;
                                 loopRate.sleep();
                             }
                             if(verbose)   echo("   Switched to Offboard");
@@ -477,13 +286,11 @@ namespace state_machine
                         }
                     }
                 }
-
                 loopRate.sleep();
             }
 
             if(verbose)   echo("  Mailbox detected, switching from Mission mode");
-            if(verbose)
-            {
+            if(verbose){
                 if(!drop_info_.is_local) echo("   Drop location: lat = " << drop_info_.latitude << ", lon = " << drop_info_.longitude);
                 else echo("   Drop location: x = " << drop_info_.position.x << ", lon = " << drop_info_.position.y);
             }
@@ -493,11 +300,9 @@ namespace state_machine
             // if(verbose)    echo("   Drop info subscriber shutdown");
             // if(verbose)    echo("   Drop location: x = " << drop_info_.position.x << ", y = " << drop_info_.position.y);
 
-            while (mode_set_)
-            {
+            while (mode_set_){
                 mission_msg.local_pose.x=0;
-                while(mission_msg.local_pose.x==0)
-                {
+                while(mission_msg.local_pose.x==0){
                     ros::spinOnce();
                     mission_msg.header.stamp = ros::Time::now();
                     mission_msg.use_local = true;
@@ -509,12 +314,8 @@ namespace state_machine
 
                 command_pub_.publish(mission_msg);
                 
-                while(mav_mode_.mode == "AUTO.MISSION")
-                {
-                    if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
-                    {
-                        mode_set_ = false;
-                    }
+                while(mav_mode_.mode == "AUTO.MISSION"){
+                    if(set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) mode_set_ = false;
                     ros::spinOnce();
                 }
                 if(verbose)   echo("   Offboard enabled");
@@ -525,24 +326,16 @@ namespace state_machine
             return;
         }
 
-        void GotoDrop(CmdGotoDrop const & cmd)
-        {
+        void GotoDrop(CmdGotoDrop const & cmd){
             if(verbose)   echo(" Going to Mailbox");
-            ros::NodeHandle nh_ = cmd.nh;
-
-            ros::Subscriber drop_info_sub_ = nh_.subscribe("drop_info", 10, drop_info_cb_);
-            ros::Subscriber global_pose_sub_ = nh_.subscribe("global_pose", 1, global_pose_cb_);
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
-            
-            ros::Rate loopRate(10);  
-            ros::Rate sleepRate(1);
+            ros::Rate loopRate(10);
 
             mav_utils_msgs::MissionInfo mission_msg;
+
             if(verbose)   echo("  Checking for drop location");
             if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){ 
                 if(verbose)   echo("  Waiting for drop location");
-                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
-                {
+                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){
                     ros::spinOnce();
                     loopRate.sleep();
                 }
@@ -551,18 +344,15 @@ namespace state_machine
             
             mission_msg.header.stamp = ros::Time::now();
             
-            if(drop_info_.is_local)
-            {
+            if(drop_info_.is_local){
                 mission_msg.use_local = true;
                 mission_msg.use_nmpc = false;
                 mission_msg.local_pose.x = drop_info_.position.x;
                 mission_msg.local_pose.y = drop_info_.position.y;
                 mission_msg.local_pose.z = hover_height;
                 if(verbose)   echo("   Mission location: x = " << mission_msg.local_pose.x << ", y = " << mission_msg.local_pose.y << "type " << drop_info_.loc_type);
-
             }
-            else
-            {
+            else{
                 mission_msg.use_local = false;
                 mission_msg.use_nmpc = false;
                 mission_msg.altitude = hover_height;
@@ -572,22 +362,12 @@ namespace state_machine
             }
  
             command_pub_.publish(mission_msg);
-
             return;
         }
 
-        void Descending(CmdDescent const & cmd)
-        {
+        void Descending(CmdDescent const & cmd){
             if(verbose)   echo(" Descending");
-                        ros::NodeHandle nh_ = cmd.nh;
-            
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
-            ros::Subscriber obj_sub_ = nh_.subscribe("object_poses", 10, obj_cb_);
-            
-            
-
-            ros::Rate loopRate(10);  
-            ros::Rate sleepRate(1);
+            ros::Rate loopRate(10);
 
             double curr_x, curr_y, curr_z=0;
             bool DescentDone = false;
@@ -596,8 +376,7 @@ namespace state_machine
             if(verbose)   echo("  Checking for drop location");
             if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){ 
                 if(verbose)   echo("  Waiting for drop location");
-                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
-                {
+                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){
                     ros::spinOnce();
                     loopRate.sleep();
                 }
@@ -605,8 +384,7 @@ namespace state_machine
             if(verbose)   echo("  Received drop location");
             
             if(verbose)   echo("  Waiting for odometry");
-            while(curr_z==0)
-            {
+            while(curr_z==0){
                 ros::spinOnce();
                 curr_x = mav_pose_.pose.pose.position.x;
                 curr_y = mav_pose_.pose.pose.position.y;
@@ -615,22 +393,18 @@ namespace state_machine
             }
             if(verbose)   echo("  Received odometry");
 
-            if(drop_info_.loc_type == "Drop")
-            {
+            if(drop_info_.loc_type == "Drop"){
                 if(verbose)   echo("  Starting descent");
 
-                while(!DescentDone)
-                {
+                while(!DescentDone){
                     mission_msg.header.stamp = ros::Time::now();
                     mission_msg.use_local = true;
                     mission_msg.use_nmpc = false;
-                    if(obj_data.object_poses.size()>0)
-                    {
+                    if(obj_data.object_poses.size()>0){
                         mission_msg.local_pose.x = obj_data.object_poses.at(0).position.x;
                         mission_msg.local_pose.y = obj_data.object_poses.at(0).position.y;
                     }
-                    else
-                    {
+                    else{
                         mission_msg.local_pose.x = mav_pose_.pose.pose.position.x;
                         mission_msg.local_pose.y = mav_pose_.pose.pose.position.y;
                     }
@@ -640,23 +414,18 @@ namespace state_machine
                     ros::spinOnce();
                     loopRate.sleep();
                 }
-        
             }
-            else if(drop_info_.loc_type == "Hover")
-            {
+            else if(drop_info_.loc_type == "Hover"){
                 if(verbose)   echo("  Starting hover over target");
-                while(!DescentDone)
-                {
+                while(!DescentDone){
                     mission_msg.header.stamp = ros::Time::now();
                     mission_msg.use_local = true;
                     mission_msg.use_nmpc = false;
-                    if(obj_data.object_poses.size()>0)
-                    {
+                    if(obj_data.object_poses.size()>0){
                         mission_msg.local_pose.x = obj_data.object_poses.at(0).position.x;
                         mission_msg.local_pose.y = obj_data.object_poses.at(0).position.y;
                     }
-                    else
-                    {
+                    else{
                         mission_msg.local_pose.x = mav_pose_.pose.pose.position.x;
                         mission_msg.local_pose.y = mav_pose_.pose.pose.position.y;
                     }
@@ -672,23 +441,15 @@ namespace state_machine
             return;      
         }
 
-        void GotoLZ(CmdGotoLZ const & cmd)
-        {
+        void GotoLZ(CmdGotoLZ const & cmd){
             if(verbose)   echo(" Going to LZ");
-            ros::NodeHandle nh_ = cmd.nh;
-            
-            ros::Subscriber home_info_sub_ = nh_.subscribe("home_info", 1, home_info_cb_);
-            
-            
-
-            ros::Rate loopRate(10);  
-            ros::Rate sleepRate(1);
+            ros::Rate loopRate(10);
 
             mav_utils_msgs::MissionInfo mission_msg;
+
             home_info_.header.seq = 0;
             if(verbose)   echo("  Waiting for Home location");
-            while(home_info_.header.seq == 0)
-            {
+            while(home_info_.header.seq == 0){
                 ros::spinOnce();
                 loopRate.sleep();
             }
@@ -705,20 +466,20 @@ namespace state_machine
             return;
         }
 
-        void Hovering(CmdHover const & cmd)
-        {
+        void Hovering(CmdHover const & cmd){
             if(verbose)   echo(" Hovering");
             ros::Rate hoverRate(1.0/hover_time);
             hoverRate.sleep();            
         }
 
-        void Dropping(CmdDrop const & cmd)
-        {
+        void Dropping(CmdDrop const & cmd){
+            if(drop_info_.loc_type == "Hover"){
+                if(verbose)     echo("Hover mode, passing through");
+                PkgAttached = false;
+                return;
+            }
             if(verbose)   echo(" Dropping Package");
-            ros::NodeHandle nh_ = cmd.nh;
-            
-            ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::Bool>("servo", 1);
-            
+
             // std_msgs::UInt16 angle_msg;
             // if(verbose)    echo("  Setting servo angle");
             // angle_msg.data = open_angle;
@@ -729,30 +490,25 @@ namespace state_machine
             
             if(verbose)   echo("  Servo angle set to " << angle_msg.data);
             
-            numPackages--;
-            PkgAttached = (numPackages > 0);
+            PkgAttached = false;
             return;
         }
 
-        void Ascending(CmdAscent const & cmd)
-        {
+        void Ascending(CmdAscent const & cmd){
+            if(drop_info_.loc_type == "Hover"){
+                if(verbose)     echo("Hover mode, passing through");
+                PkgAttached = true;
+                return;
+            }
             if(verbose)   echo(" Ascending");
-            ros::NodeHandle nh_ = cmd.nh;
-            
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
-            
-            
+            ros::Rate loopRate(10);
 
-            ros::Rate loopRate(10);  
-            ros::Rate sleepRate(1);
-                        
             double curr_x, curr_y, curr_z=0;
             bool AscentDone = false;
-
             mav_utils_msgs::MissionInfo mission_msg;
+
             if(verbose)   echo("  Waiting for odometry");
-            while(curr_z==0)
-            {
+            while(curr_z==0){
                 ros::spinOnce();
                 curr_x = mav_pose_.pose.pose.position.x;
                 curr_y = mav_pose_.pose.pose.position.y;
@@ -772,8 +528,7 @@ namespace state_machine
 
             command_pub_.publish(mission_msg);
             
-            while(!AscentDone)
-            {
+            while(!AscentDone){
                 ros::spinOnce();
                 curr_z = mav_pose_.pose.pose.position.z;
                 AscentDone = (curr_z < hover_height) ? false : true;
@@ -784,41 +539,26 @@ namespace state_machine
             return;
         }
 
-        void Landing(CmdLand const & cmd)
-        {
-            if(verbose)   echo(" Landing");
-            ros::NodeHandle nh_ = cmd.nh;
-            
-            ros::Subscriber mav_pose_sub_ = nh_.subscribe("odometry", 10, mav_pose_cb_);
-            ros::Subscriber heli_sub_ = nh_.subscribe("helipad", 10, helipad_cb_);
-            
-            
-            
-            ros::ServiceClient detector_client = nh_.serviceClient<mav_utils_msgs::signal>("detector/terminate");
-            ros::ServiceClient helipad_client = nh_.serviceClient<mav_utils_msgs::signal>("hdetect/terminate");
-
+        void Landing(CmdLand const & cmd){
+            if(verbose)   echo(" Landing"); 
             ros::Rate loopRate(10);
-            ros::Rate sleepRate(1);
 
             mav_utils_msgs::signal stop, start;
             stop.request.signal = 0;
             start.request.signal = 1;
-            if(detector_client.call(stop) && stop.response.success)
-            {
+            if(detector_client.call(stop) && stop.response.success){
                 if(verbose)   echo("  detector node stopped");
             }
-            if(helipad_client.call(start) && start.response.success)
-            {
+            if(helipad_client.call(start) && start.response.success){
                 if(verbose)   echo("  hdetect node started");
             }
 
             double curr_x, curr_y, curr_z=0;
             bool LandingDone = false;
-            
             mav_utils_msgs::MissionInfo mission_msg;
+
             if(verbose)   echo("  Waiting for odometry");
-            while(curr_z==0)
-            {
+            while(curr_z==0){
                 ros::spinOnce();
                 curr_x = mav_pose_.pose.pose.position.x;
                 curr_y = mav_pose_.pose.pose.position.y;
@@ -829,26 +569,22 @@ namespace state_machine
 
             if(verbose)   echo("  Waiting for helipad position");
             helipad.imageID = 0;
-            while(helipad.imageID == 0)
-            {
+            while(helipad.imageID == 0){
                 ros::spinOnce();
                 loopRate.sleep();
             }
             if(verbose)   echo("  Received helipad position");
 
             if(verbose)   echo("  Landing initiated");
-            while(!LandingDone)
-            {
+            while(!LandingDone){
                 mission_msg.header.stamp = ros::Time::now();
                 mission_msg.use_local = true;
                 mission_msg.use_nmpc = false;
-                if(helipad.object_poses.size()>0)
-                {
+                if(helipad.object_poses.size()>0){
                     mission_msg.local_pose.x = helipad.object_poses.at(0).position.x;
                     mission_msg.local_pose.y = helipad.object_poses.at(0).position.y;
                 }
-                else
-                {
+                else{
                     mission_msg.local_pose.x = mav_pose_.pose.pose.position.x;
                     mission_msg.local_pose.y = mav_pose_.pose.pose.position.y;
                 }
@@ -863,12 +599,12 @@ namespace state_machine
             return;
         }
 
-        void DropOver(CmdDropOver const & cmd)
-        {
+        void DropOver(CmdDropOver const & cmd){
+            if(drop_info_.loc_type == "Hover"){
+                if(verbose)     echo("Hover mode, passing through");
+                return;
+            }
             if(verbose)   echo(" Package dropped, resetting gripper");
-            ros::NodeHandle nh_ = cmd.nh;
-
-            // ros::Publisher gripper_pub_ = nh_.advertise<std_msgs::Bool>("servo", 1);
             
             // std_msgs::UInt16 angle_msg;
             // if(verbose)    echo("  Setting servo angle");
@@ -883,21 +619,14 @@ namespace state_machine
 
         // location check functions
 
-        bool isAtLZ(ros::NodeHandle nh)
-        {
-            ros::Subscriber home_info_sub_ = nh.subscribe("home_info", 10, home_info_cb_);
-            ros::Subscriber global_pose_sub_ = nh.subscribe("global_pose", 10, global_pose_cb_);
-
-            ros::Rate loopRate(10);
-            ros::Rate sleepRate(1);
-
+        bool isAtLZ(ros::NodeHandle nh){
             double dist = 0;
             bool AtLoc = false;
+            ros::Rate loopRate(10);
 
             home_info_.geo.latitude = 0;
             if(verbose)   echo("  Waiting for home location");
-            while(home_info_.geo.latitude == 0)
-            {
+            while(home_info_.geo.latitude == 0){
                 ros::spinOnce();
                 loopRate.sleep();
             }
@@ -905,16 +634,14 @@ namespace state_machine
 
             if(verbose)   echo("  Waiting for GPS position");
             global_pose_.latitude = 0;
-            while(global_pose_.latitude == 0)
-            {
+            while(global_pose_.latitude == 0){
                 ros::spinOnce();
                 loopRate.sleep();
             }
             if(verbose)   echo("  Received GPS postion");
 
             if(verbose)   echo("  Enroute to LZ, please wait");
-            while(!AtLoc)
-            {
+            while(!AtLoc){
                 ros::spinOnce();
                 dist = sq(global_pose_.latitude - home_info_.geo.latitude) + sq(global_pose_.longitude - home_info_.geo.longitude);
                 AtLoc = (dist > gps_error) ? false : true;
@@ -925,25 +652,15 @@ namespace state_machine
             return AtLoc;
         }
 
-        bool isAtMB(ros::NodeHandle nh)
-        {
-            ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
-            ros::Subscriber drop_info_sub_ = nh.subscribe("drop_info", 10, drop_info_cb_);
-            ros::Subscriber global_pose_sub_ = nh.subscribe("global_pose", 10, global_pose_cb_);
-
-            ros::Rate loopRate(10);
-            ros::Rate sleepRate(1);
-
-            double dist = 0;
-            double curr_x, curr_y, curr_z = 0;
+        bool isAtMB(ros::NodeHandle nh){
+            double dist = 0, curr_x, curr_y, curr_z = 0;
             bool AtLoc = false;
+            ros::Rate loopRate(10);
 
             if(verbose)   echo("  Checking for drop info");
-            if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
-            {
+            if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){
                 if(verbose)   echo("  Waiting for drop location");
-                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover")
-                {
+                while(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){
                     ros::spinOnce();
                     loopRate.sleep();
                 }
@@ -951,8 +668,7 @@ namespace state_machine
             if(verbose)   echo("  Received Drop location");
 
             if(verbose)   echo("  Waiting for odometry");
-            while(curr_z==0)
-            {
+            while(curr_z==0){
                 ros::spinOnce();
                 curr_x = mav_pose_.pose.pose.position.x;
                 curr_y = mav_pose_.pose.pose.position.y;
@@ -963,28 +679,23 @@ namespace state_machine
 
             if(verbose)   echo("  Waiting for GPS position");
             global_pose_.latitude = 0;
-            while(global_pose_.latitude == 0)
-            {
+            while(global_pose_.latitude == 0){
                 ros::spinOnce();
                 loopRate.sleep();
             }
             if(verbose)   echo("  Received GPS postion");            
 
             if(verbose)   echo("   Enroute to Mailbox, please wait");
-            if(drop_info_.is_local)
-            {
-                while(!AtLoc)
-                {
+            if(drop_info_.is_local){
+                while(!AtLoc){
                     ros::spinOnce();
                     dist = sq((mav_pose_.pose.pose.position.x - drop_info_.position.x)) + sq((mav_pose_.pose.pose.position.y - drop_info_.position.y));
                     AtLoc = (dist > loc_error) ? false : true;
                     loopRate.sleep();
                 }
             }
-            else
-            {
-                while(!AtLoc)
-                {
+            else{
+                while(!AtLoc){
                     ros::spinOnce();
                     dist = sq(global_pose_.latitude - drop_info_.latitude) + sq(global_pose_.longitude - drop_info_.longitude);
                     AtLoc = (dist > gps_error) ? false : true;
@@ -998,76 +709,55 @@ namespace state_machine
 
         // transition guard functions
 
-        bool ReachedLZ(CmdHover const & cmd)
-        {
-            if(isAtLZ(cmd.nh))
-            {
-                if(verbose)   echo(" Reached LZ");
-            }
-
+        bool ReachedLZ(CmdHover const & cmd){
+            if(isAtLZ(nh)){if(verbose)   echo(" Reached LZ");}
             return AtLZ;
         }
 
-        bool ReachedMailbox(CmdHover const & cmd)
-        {
-            if(isAtMB(cmd.nh))
-            {
-                if(verbose)   echo(" Reached Mailbox");
-            }
-
+        bool ReachedMailbox(CmdHover const & cmd){
+            if(isAtMB(nh)){if(verbose)   echo(" Reached Mailbox");}
             return AtMailbox;
         }
 
-        template<class Event>
-        bool NoPkg(Event const &){
-            if(PkgAttached)
-            {
+        template<class Event> bool NoPkg(Event const &){
+            if(PkgAttached){
                 if(verbose)   echo(" Pkg is attached, cannot proceed");
                 return false;
             }
-            else
-            {
+            else{
                 if(verbose)   echo(" Pkg is not attached, proceeding");
                 return true;
             }
         }
 
-        template<class Event>
-        bool HasPkg(Event const &){
-            if(PkgAttached)
-            {
+        template<class Event> bool HasPkg(Event const &){
+            if(PkgAttached){
                 if(verbose)   echo(" Pkg is attached, proceeding");
                 return true;
             }
-            else
-            {
+            else{
                 if(verbose)   echo(" Pkg is not attached, cannot proceed");
                 return false;
             }
         }
 
         bool ExecMission(CmdExploring const &){
-            if(ContMission)
-            {
+            if(ContMission){
                 if(verbose)   echo(" Executing Mission");
                 return true;
             }
-            else
-            {
+            else{
                 if(verbose)   echo(" Not executing Mission");
                 return false;
             }
         }      
         
-        template<class Event>
-        bool StopMission(Event const &){
-            if(!ContMission)
-            {
+        template<class Event> bool StopMission(Event const &){
+            if(!ContMission){
                 if(verbose)   echo(" Not executing Mission");
                 return true;
             }
-            else
-            {
+            else{
                 if(verbose)   echo(" Executing Mission");
                 return false;
             }
@@ -1100,7 +790,6 @@ namespace state_machine
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
         
         >{};
-
     };
 
     // state machine back end declaration
@@ -1116,25 +805,19 @@ namespace state_machine
                                             "ReachLZ"};
 
     // helper function -- output current state
-    void echo_state(fsm_ const& msg)
-    {
-        if(verbose)   echo("Current state -- " << state_names[msg.current_state()[0]]);
-    }
+    void echo_state(fsm_ const& msg){if(verbose)   echo("Current state -- " << state_names[msg.current_state()[0]]);}
 
     // state publisher
     void statePublish(ros::NodeHandle nh, fsm_ *fsm)
     {
         ros::Publisher statePub = nh.advertise<std_msgs::String>("curr_state", 10);
-        
         ros::Rate loopRate(10);
 
         std_msgs::String msg;
-        while(ros::ok())
-        {
+        while(ros::ok()){
             msg.data = state_names[fsm->current_state()[0]];
             statePub.publish(msg);
             loopRate.sleep();
         }
     }
-
 }

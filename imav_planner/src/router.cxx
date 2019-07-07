@@ -10,68 +10,43 @@
 
 #define echo(x) std::cout << x << std::endl
 
-std::string mavName, names[3];
-std::string curr_state;
+std::string mavName, curr_state, names[3];
 sensor_msgs::NavSatFix globalPose;
 std::vector<mav_utils_msgs::RouterData> routerData[2];
 mav_utils_msgs::BBPoses obj_data;
 bool verbose = true;
 int id=-1;
 
-struct locData
-{
+struct locData{
     int drops;
-    // bool publish;
     double latitude;
     double longitude;
+    // bool publish;
 };
 
 int ids[3][8] = {{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}};
 struct locData objects[8];
 
-void objCallback(const mav_utils_msgs::BBPoses& msg)
-{
-    obj_data = msg;
-}
+void objCallback(const mav_utils_msgs::BBPoses& msg){obj_data = msg;}
+void poseCallback(const sensor_msgs::NavSatFix& msg){globalPose = msg;}
+void stateCallback(const std_msgs::String& msg){curr_state = msg.data;}
 
-void r1Callback(const mav_utils_msgs::RouterInfo& msg)
-{
-    for(int i=0; i<8; i++)
-    {
-        ids[1][i] = msg.object_id.at(i);
-    }
+void r1Callback(const mav_utils_msgs::RouterInfo& msg){
+    for(int i=0; i<8; i++) ids[1][i] = msg.object_id.at(i);
     routerData[0] = msg.router_data;
 }
-
-void r2Callback(const mav_utils_msgs::RouterInfo& msg)
-{
-    for(int i=0; i<8; i++)
-    {
-        ids[2][i] = msg.object_id.at(i);
-    }
+void r2Callback(const mav_utils_msgs::RouterInfo& msg){
+    for(int i=0; i<8; i++) ids[2][i] = msg.object_id.at(i);
     routerData[1] = msg.router_data;
 }
 
-void poseCallback(const sensor_msgs::NavSatFix& msg)
-{
-    globalPose = msg;
-}
+void updateTable(){
 
-void stateCallback(const std_msgs::String& msg)
-{
-    curr_state = msg.data;
-}
-
-void updateTable()
-{
     int num, drops;
-    for(int i=0; i<obj_data.object_poses.size(); i++)
-    {
+    for(int i=0; i<obj_data.object_poses.size(); i++){
         num = drops = -1;
-        if(obj_data.object_poses.at(i).store)
-        {
-            switch(obj_data.object_poses.at(i).type)
-            {
+        if(obj_data.object_poses.at(i).store){
+            switch(obj_data.object_poses.at(i).type){
                 // house
                 case 42: num = 0; drops = 1; break;
 
@@ -90,8 +65,7 @@ void updateTable()
                 default: continue;
             }
 
-            if(ids[0][num]==0)
-            {    
+            if(ids[0][num]==0){    
                 ids[0][num] = 1; 
                 objects[num].drops = drops; 
                 // objects[num].publish = true;
@@ -101,10 +75,8 @@ void updateTable()
         }
     }
 
-    for(int i=0; i<2; i++)
-    {
-        for(int j=0; j<routerData[i].size(); j++)
-        {
+    for(int i=0; i<2; i++){
+        for(int j=0; j<routerData[i].size(); j++){
             ids[0][routerData[i].at(j).id] = 1;
 
             struct locData data;
@@ -116,17 +88,18 @@ void updateTable()
             objects[routerData[i].at(j).id] = data;
         }
     }
+
+    return;
 }
 
-void updateRouters(ros::Publisher *pub)
-{
+void updateRouters(ros::Publisher *pub){
+
     mav_utils_msgs::RouterInfo info_msg;
     mav_utils_msgs::RouterData data;
-    for(int i=0; i<8; i++)
-    {
+
+    for(int i=0; i<8; i++){
         info_msg.object_id.push_back(ids[0][i]);
-        if(ids[0][i] == 1 && (ids[1][i] == 0 || ids[2][i] == 0))
-        {
+        if(ids[0][i] == 1 && (ids[1][i] == 0 || ids[2][i] == 0)){
             data.id = i;
             data.altitude = (i>0 && i<4) ? 2 : 1;
             data.latitude = objects[i].latitude;
@@ -134,31 +107,31 @@ void updateRouters(ros::Publisher *pub)
             info_msg.router_data.push_back(data);
         }
     }
+
     info_msg.header.stamp = ros::Time::now();
     pub->publish(info_msg);
+
+    return;
 }
 
-void publishTask(ros::Publisher *pub)
-{
+void publishTask(ros::Publisher *pub){
+
     if(curr_state != "Exploring") return;
+
     mav_utils_msgs::TaskInfo task;
     int num=-1;
 
-    if(obj_data.object_poses.size() > 0)
-    {
+    if(obj_data.object_poses.size() > 0){
         task.header.stamp = ros::Time::now();
         task.is_local = true;
         task.position = obj_data.object_poses.at(0).position;
-        if(obj_data.object_poses.at(0).type == -id*10)
-        {
+        if(obj_data.object_poses.at(0).type == -id*10){
             task.loc_type = "Drop";
             num = id;
         }
-        else 
-        {
+        else{
             task.loc_type = "Hover";
-            switch(obj_data.object_poses.at(0).type)
-            {
+            switch(obj_data.object_poses.at(0).type){
                 // house
                 case 42: num = 0;
 
@@ -176,15 +149,13 @@ void publishTask(ros::Publisher *pub)
                 case 69: num = 7;
             }
         }
-        if(objects[num].drops > 0)
-        {
+        if(objects[num].drops > 0){
             pub->publish(task);
             objects[num].drops -= 1;
         }
         return;
     }
-    else if(objects[id].drops > 0)
-    {
+    else if(objects[id].drops > 0){
         task.header.stamp = ros::Time::now();
         task.is_local = false;
         task.latitude = objects[id].latitude;
@@ -196,8 +167,8 @@ void publishTask(ros::Publisher *pub)
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv){
+
     ros::init(argc, argv, "router");
     ros::NodeHandle ph("~");
 
@@ -209,11 +180,7 @@ int main(int argc, char** argv)
     ph.getParam("names/yellow", names[1]);
     ph.getParam("names/blue", names[2]);
 
-    for(int i=0; i<3; i++)
-    {
-        if(mavName == names[i]) id = i+1;
-    }
-
+    for(int i=0; i<3; i++)  if(mavName == names[i]) id = i+1;
     if(verbose) echo(id);
 
     ros::NodeHandle routers[3] = {"/" + names[id-1], "/" + names[(id)%3], "/" + names[(id+1)%3]};
@@ -226,8 +193,7 @@ int main(int argc, char** argv)
     ros::Publisher routerPub = ph.advertise<mav_utils_msgs::RouterInfo>("data", 10);
     ros::Publisher taskPub = routers[0].advertise<mav_utils_msgs::TaskInfo>("task", 10);
     
-    while(ros::ok())
-    {
+    while(ros::ok()){
         ros::spinOnce();
         updateTable();
         updateRouters(&routerPub);
@@ -235,4 +201,5 @@ int main(int argc, char** argv)
         loopRate.sleep();
     }    
 
+    return 0;
 }
