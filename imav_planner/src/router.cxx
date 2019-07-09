@@ -1,8 +1,9 @@
 #include <ros/ros.h>
 
 #include <std_msgs/String.h>
-#include <sensor_msgs/NavSatFix.h>
+#include <nav_msgs/Odometry.h>
 
+#include <mav_utils_msgs/UTMPose.h>
 #include <mav_utils_msgs/TaskInfo.h>
 #include <mav_utils_msgs/RouterData.h>
 #include <mav_utils_msgs/RouterInfo.h>
@@ -13,16 +14,17 @@
 #define numObjects 8
 
 std::string mavName, curr_state, names[numQuads];
-sensor_msgs::NavSatFix globalPose;
 std::vector<mav_utils_msgs::RouterData> routerData[numQuads - 1];
 mav_utils_msgs::BBPoses obj_data;
+mav_utils_msgs::UTMPose utm_pose;
+nav_msgs::Odometry odom;
 bool verbose = true;
-int id=-1;
+int id=-1, pubId = -1;
 
 struct locData{
     int drops;
-    double latitude;
-    double longitude;
+    double x;
+    double y;
     // bool publish;
 };
 
@@ -32,7 +34,8 @@ int types[numObjects] = {42, -10, -20, -30, 10, 20, 30, 69};
 int quadTypes[numQuads];
 
 void objCallback(const mav_utils_msgs::BBPoses& msg){obj_data = msg;}
-void poseCallback(const sensor_msgs::NavSatFix& msg){globalPose = msg;}
+void utmCallback(const mav_utils_msgs::UTMPose& msg){utm_pose = msg;}
+void odomCallback(const nav_msgs::Odometry& msg){odom = msg;}
 void stateCallback(const std_msgs::String& msg){curr_state = msg.data;}
 
 void r1Callback(const mav_utils_msgs::RouterInfo& msg){
@@ -75,11 +78,11 @@ void updateTable(){
                 ids[0][num] = 1; 
                 objects[num].drops = drops; 
                 // objects[num].publish = true;
-                objects[num].latitude = globalPose.latitude;
-                objects[num].longitude = globalPose.longitude;
+                objects[num].x = obj_data.object_poses.at(i).position.x - odom.pose.pose.position.x + utm_pose.pose.position.x; 
+                objects[num].y = obj_data.object_poses.at(i).position.y - odom.pose.pose.position.y + utm_pose.pose.position.y;
             }
 
-            if(verbose) echo("  Stored lat = " << objects[num].latitude << ", lon = " << objects[num].longitude << ", drops = " << drops << " at array pos = " << num);
+            if(verbose) echo("  Stored x = " << objects[num].x << ", y = " << objects[num].y << ", drops = " << drops << " at array pos = " << num);
         }
     }
 
@@ -89,13 +92,13 @@ void updateTable(){
             ids[0][routerData[i].at(j).id] = 1;
 
             struct locData data;
-            data.drops = routerData[i].at(j).altitude;
-            data.latitude = routerData[i].at(j).latitude;
-            data.longitude = routerData[i].at(j).longitude;
+            data.drops = routerData[i].at(j).position.z;
+            data.x = routerData[i].at(j).position.x;
+            data.y = routerData[i].at(j).position.y;
             // data.publish = false;
 
             objects[routerData[i].at(j).id] = data;
-            if(verbose) echo("  Stored lat = " << data.latitude << ", lon = " << data.longitude << ", drops = " << data.drops << " at array pos = " << routerData[i].at(j).id);
+            if(verbose) echo("  Stored x = " << data.x << ", y = " << data.y << ", drops = " << data.drops << " at array pos = " << routerData[i].at(j).id);
         }
     }
 
@@ -113,11 +116,11 @@ void updateRouters(ros::Publisher *pub){
         if(ids[0][i] == 1 && (ids[1][i] == 0 || ids[2][i] == 0)){
             if(verbose) echo(" Publishing to other routers");
             data.id = i;
-            data.altitude = (i>0 && i<4) ? 2 : 1;
-            data.latitude = objects[i].latitude;
-            data.longitude = objects[i].longitude;
+            data.position.z = (i>0 && i<4) ? 2 : 1;
+            data.position.x = objects[i].x;
+            data.position.y = objects[i].y;
             info_msg.router_data.push_back(data);
-            if(verbose) echo("  Published lat = " << data.latitude << ", lon = " << data.longitude << ", drops = " << data.altitude << " for array pos = " << data.id);
+            if(verbose) echo("  Published x = " << data.position.x << ", lon = " << data.position.y << ", drops = " << data.position.z << " for array pos = " << data.id);
         }
     }
 
@@ -128,6 +131,7 @@ void updateRouters(ros::Publisher *pub){
 }
 
 void publishTask(ros::Publisher *pub){
+    if(curr_state == "DropOver") objects[pubId].drops -= 1;
 
     if(curr_state != "Exploring") return;
     if(verbose) echo("Publishing tasks");
@@ -138,8 +142,9 @@ void publishTask(ros::Publisher *pub){
     if(obj_data.object_poses.size() > 0){
         if(verbose) echo(" Processing detector data");
         task.header.stamp = ros::Time::now();
-        task.is_local = true;
-        task.position = obj_data.object_poses.at(0).position;
+        task.position.x = obj_data.object_poses.at(0).position.x;
+        task.position.y = obj_data.object_poses.at(0).position.y;
+        task.position.z = 0;
         if(obj_data.object_poses.at(0).type == -id*10){
             task.loc_type = "Drop";
             num = id;
@@ -165,23 +170,24 @@ void publishTask(ros::Publisher *pub){
             }
         }
         if(objects[num].drops > 0){
+            task.id = num;
             pub->publish(task);
-            objects[num].drops -= 1;
-            if(verbose) echo("  Published local task: loc_type = " << task.loc_type << ", position: x = " << task.position.x << ", y = " << task.position.y << ", z = " << task.position.z);
+            pubId = num;
+            if(verbose) echo("  Published from detector: loc_type = " << task.loc_type << ", position: x = " << task.position.x << ", y = " << task.position.y << ", z = " << task.position.z);
         }
         return;
     }
     else if(objects[id].drops > 0){
         if(verbose) echo(" Publishing from table");
         task.header.stamp = ros::Time::now();
-        task.is_local = false;
         task.loc_type = "Drop";
-        task.latitude = objects[id].latitude;
-        task.longitude = objects[id].longitude;
-        task.altitude = 0;
-        objects[id].drops -= 1;
+        task.id = id;
+        task.position.x = objects[id].x + odom.pose.pose.position.x - utm_pose.pose.position.x;
+        task.position.y = objects[id].y + odom.pose.pose.position.y - utm_pose.pose.position.y;
+        task.position.z = 0;
         pub->publish(task);
-        echo("  Published global task: loc_type = " << task.loc_type << ", position: lat = " << task.latitude << ", lon = " << task.longitude);
+        pubId = id;
+        echo("  Published from table: loc_type = " << task.loc_type << ", position: x = " << task.position.x << ", y = " << task.position.y << ", z = " << task.position.z);
         return;
     }
 }
@@ -214,7 +220,8 @@ int main(int argc, char** argv){
     
     ros::Subscriber objSub = routers[0].subscribe("objects", 10, objCallback);
     ros::Subscriber stateSub = routers[0].subscribe("curr_state", 10, stateCallback);
-    ros::Subscriber poseSub = routers[0].subscribe("global_pose", 10, poseCallback);
+    ros::Subscriber utmSub = routers[0].subscribe("utm_pose", 10, utmCallback);
+    ros::Subscriber odomSub = routers[0].subscribe("odometry", 10, odomCallback);
     ros::Subscriber subs[numQuads - 1] = {routers[1].subscribe("router/data", 10, r1Callback), routers[2].subscribe("router/data", 10, r2Callback)};
     
     ros::Publisher routerPub = ph.advertise<mav_utils_msgs::RouterInfo>("data", 10);
