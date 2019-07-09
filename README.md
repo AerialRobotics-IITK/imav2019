@@ -120,3 +120,6 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [YOLO](https://pjreddie.com/darknet/yolo/)
 - [DroneNet on YOLO](https://github.com/chuanenlin/drone-net/)
 - [DarkNet integrated with ROS](https://github.com/leggedrobotics/darknet_ros)
+#### Mosh - SSH's Superior Substitute
+- [Mobile Shell](https://mosh.org/)
+- Can be fired up simply by `sudo apt install mosh`
