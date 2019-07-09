@@ -13,15 +13,15 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - [X] Budget Proposal Submission
 
 ### Testing
-- [ ] H-detector (TS+KK+AD)
+- [X] H-detector (TS+KK+AD)
     - [X] Update
     - [X] Clean
     - [X] Push
     - [X] Deploy
-    - [X] Floodfill
+    - [X] Floodfill - Not Applying
     - [X] Slope Matching
-    - [ ] Benchmark
-    - [ ] High-speed datasets
+    - [X] Benchmark
+    - [X] High-speed datasets
 - [ ] Vision testing with 3D mailbox (GN+AS)
 - [ ] **Odroid benchmarking** (PM+PC)
 - [X] MPC tuning for Flamewheel (KDE+Pixhawk)
@@ -50,7 +50,7 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 
 ### Hardware
 - [X] Odroid Setup
-- [ ] Gripper Design
+- [ ] Gripper Design - Currently using Servos and most probably will use that.
 
 ### Non-Technical
 - [ ] Purchases (PC+PM+AP)
@@ -65,7 +65,7 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 
 ## To Buy/Get
 - [X] Antenna-based Wifi Module
-- [ ] Wifi router
+- [X] Wifi router
 - [X] eMMC Reader
 - [X] KDE Boxes
 - [X] Arduino Nano
