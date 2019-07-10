@@ -19,6 +19,7 @@ mav_utils_msgs::BBPoses obj_data;
 mav_utils_msgs::UTMPose utm_pose;
 nav_msgs::Odometry odom;
 bool verbose = true;
+bool received = false;
 int id=-1, pubId = -1;
 
 struct locData{
@@ -60,9 +61,9 @@ void updateTable(){
                 case 42: num = 0; drops = 1; break;
 
                 // mailboxes
-                case -10: num = 1; drops = 2; break;
-                case -20: num = 2; drops = 2; break;
-                case -30: num = 3; drops = 2; break;
+                case -10: num = 1; drops = 1; break;
+                case -20: num = 2; drops = 1; break;
+                case -30: num = 3; drops = 1; break;
 
                 // lost packages
                 case 10: num = 4; drops = 1; break;
@@ -116,11 +117,11 @@ void updateRouters(ros::Publisher *pub){
         if(ids[0][i] == 1 && (ids[1][i] == 0 || ids[2][i] == 0)){
             if(verbose) echo(" Publishing to other routers");
             data.id = i;
-            data.position.z = (i>0 && i<4) ? 2 : 1;
+            data.position.z = objects[i].drops + (int)(i>0 && i<4 && i != id); 
             data.position.x = objects[i].x;
             data.position.y = objects[i].y;
             info_msg.router_data.push_back(data);
-            if(verbose) echo("  Published x = " << data.position.x << ", lon = " << data.position.y << ", drops = " << data.position.z << " for array pos = " << data.id);
+            if(verbose) echo("  Published x = " << data.position.x << ", y = " << data.position.y << ", drops = " << data.position.z << " for array pos = " << data.id);
         }
     }
 
@@ -131,7 +132,7 @@ void updateRouters(ros::Publisher *pub){
 }
 
 void publishTask(ros::Publisher *pub){
-    if(curr_state == "DropOver") objects[pubId].drops -= 1;
+    if(curr_state == "Drop") objects[pubId].drops -= 1;
 
     if(curr_state != "Exploring") return;
     if(verbose) echo("Publishing tasks");
@@ -145,32 +146,32 @@ void publishTask(ros::Publisher *pub){
         task.position.x = obj_data.object_poses.at(0).position.x;
         task.position.y = obj_data.object_poses.at(0).position.y;
         task.position.z = 0;
-        if(obj_data.object_poses.at(0).type == -id*10){
+        task.id = obj_data.object_poses.at(0).type;
+        if(task.id == -id*10){
             task.loc_type = "Drop";
             num = id;
         }
         else{
             task.loc_type = "Hover";
-            switch(obj_data.object_poses.at(0).type){
+            switch(task.id){
                 // house
-                case 42: num = 0;
+                case 42: num = 0; break;
 
                 // mailboxes
-                case -10: num = 1;
-                case -20: num = 2;
-                case -30: num = 3;
+                case -10: num = 1; break;
+                case -20: num = 2; break;
+                case -30: num = 3; break;
 
                 // lost packages
-                case 10: num = 4;
-                case 20: num = 5;
-                case 30: num = 6;
+                case 10: num = 4; break;
+                case 20: num = 5; break;
+                case 30: num = 6; break;
 
                 // crashed drone
-                case 69: num = 7;
+                case 69: num = 7; break;
             }
         }
         if(objects[num].drops > 0){
-            task.id = num;
             pub->publish(task);
             pubId = num;
             if(verbose) echo("  Published from detector: loc_type = " << task.loc_type << ", position: x = " << task.position.x << ", y = " << task.position.y << ", z = " << task.position.z);
@@ -181,7 +182,6 @@ void publishTask(ros::Publisher *pub){
         if(verbose) echo(" Publishing from table");
         task.header.stamp = ros::Time::now();
         task.loc_type = "Drop";
-        task.id = id;
         task.position.x = objects[id].x + odom.pose.pose.position.x - utm_pose.pose.position.x;
         task.position.y = objects[id].y + odom.pose.pose.position.y - utm_pose.pose.position.y;
         task.position.z = 0;
@@ -215,6 +215,8 @@ int main(int argc, char** argv){
             ids[i][j] = 0;
         }
     }
+
+    for(int i = 0; i < numObjects; i++) objects[i].drops = 1;
 
     ros::NodeHandle routers[numQuads] = {"/" + names[id-1], "/" + names[(id)%numQuads], "/" + names[(id+1)%numQuads]};
     
