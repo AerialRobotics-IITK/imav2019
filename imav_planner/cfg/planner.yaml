@@ -1,7 +1,6 @@
 verbose: true
 
 error:
-  gps: 1
   local: 0.3
 
 height:

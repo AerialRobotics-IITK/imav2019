@@ -1,11 +1,8 @@
 #include <ros/ros.h>
 #include <future>
 
-#include <GeographicLib/Geodesic.hpp>
-
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PointStamped.h>
-#include <sensor_msgs/NavSatFix.h>
 
 #include <std_srvs/Empty.h>
 #include <std_msgs/Bool.h>
@@ -36,17 +33,15 @@
 
 // storage variables
 nav_msgs::Odometry mav_pose_;
-sensor_msgs::NavSatFix global_pose_;
 mav_utils_msgs::UTMPose utm_pose_;
 mav_utils_msgs::BBPoses obj_data, helipad;
 mav_utils_msgs::TaskInfo drop_info_;
-mavros_msgs::HomePosition home_info_;
+geometry_msgs::PointStamped home_info_;
 mavros_msgs::WaypointReached prev_wp;
 mavros_msgs::State mav_mode_;
 std_msgs::Bool gripper_status_;
 
-// errors for location comparison
-double gps_error = 1.0;
+// error for location comparison
 double loc_error = 0.05;
 
 // verbose flag
@@ -71,9 +66,8 @@ double wait_time = 20.0;
 // callback functions
 
 void mav_pose_cb_(const nav_msgs::Odometry &msg){mav_pose_ = msg;}
-void home_info_cb_(const mavros_msgs::HomePosition &msg){home_info_ = msg;}
+void home_info_cb_(const geometry_msgs::PointStamped &msg){home_info_ = msg;}
 void drop_info_cb_(const mav_utils_msgs::TaskInfo &msg){drop_info_ = msg;}
-void global_pose_cb_(const sensor_msgs::NavSatFix &msg){global_pose_ = msg;}
 void obj_cb_(const mav_utils_msgs::BBPoses &msg){obj_data = msg;}
 void helipad_cb_(const mav_utils_msgs::BBPoses &msg){helipad = msg;}
 void utm_pose_cb_(const mav_utils_msgs::UTMPose &msg){utm_pose_ = msg;}
@@ -86,7 +80,6 @@ namespace state_machine{
 
     namespace msm = boost::msm;
     namespace mpl = boost::mpl;
-    namespace geo = GeographicLib;
 
     // state machine commands
 
@@ -108,8 +101,7 @@ namespace state_machine{
     bool AtMailbox = false;
     bool ContMission = true;
     bool HoverMode = false;
-
-    const geo::Geodesic &geod = geo::Geodesic::WGS84();
+    int prev_drop_id = -INT_MAX;
 
     // state machine object
 
@@ -166,7 +158,6 @@ namespace state_machine{
         ros::Subscriber drop_info_sub_ = nh.subscribe("drop_info", 1, drop_info_cb_);
         ros::Subscriber home_info_sub_ = nh.subscribe("home_info", 1, home_info_cb_);
         ros::Subscriber utm_pose_sub_ = nh.subscribe("utm_pose", 1, utm_pose_cb_);
-        ros::Subscriber global_pose_sub_ = nh.subscribe("global_pose", 1, global_pose_cb_);
         ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
         ros::Subscriber mission_wp_sub = nh.subscribe("mission/reached", 10, wp_reached_cb_);
         ros::Subscriber state_sub_ = nh.subscribe("state",1, state_cb_);
@@ -215,36 +206,21 @@ namespace state_machine{
                 if(verbose)   echo("  Started detector node");
             }
 
-            home_info_.geo.latitude = -DBL_MAX;
-            if(verbose)   echo("  Waiting for Home location");
-            while(home_info_.geo.latitude == -DBL_MAX){
-                ros::spinOnce();
-                loopRate.sleep();
-            }
-            if(verbose)   echo("  Home location received");
-
-            global_pose_.latitude = -DBL_MAX;
-            if(verbose)   echo("  Waiting for GPS data");
-            while(global_pose_.latitude == -DBL_MAX){
-                ros::spinOnce();
-                loopRate.sleep();
-            }
-            if(verbose)   echo("  Receiver GPS position");
-
-            utm_pose_.pose.position.z = -DBL_MAX;
-            if(verbose)   echo("  Waiting for UTM position");
-            while(utm_pose_.pose.position.z == -DBL_MAX){
-                ros::spinOnce();
-                loopRate.sleep();
-            }
-            if(verbose)   echo("  Received UTM position");
-
             mavros_msgs::WaypointPull req;
             int num_wp=0;
             if(mission_client.call(req) && req.response.success){
                 if(verbose)     echo("  Received waypoints");
                 num_wp = req.response.wp_received - 1;
             }
+
+            if (verbose) echo("  Waiting for odometry");
+            mav_pose_.pose.pose.position.z = -DBL_MAX;
+            while (mav_pose_.pose.pose.position.z == -DBL_MAX)
+            {
+                ros::spinOnce();
+                loopRate.sleep();
+            }
+            if (verbose) echo("  Received odometry");
 
             mavros_msgs::SetMode mission_set_mode, offb_set_mode;
             offb_set_mode.request.custom_mode = "OFFBOARD";
@@ -266,34 +242,29 @@ namespace state_machine{
 
             drop_info_.loc_type = "";
             if(verbose)   echo("  Searching for mailboxes");
-            double home_dist = 0;
-            while ((drop_info_.loc_type != "Drop" || !PkgAttached) && drop_info_.loc_type != "Hover"){
+
+            while (((drop_info_.loc_type != "Drop" || !PkgAttached) && drop_info_.loc_type != "Hover") || drop_info_.id == prev_drop_id){
                 ros::spinOnce();
-                geod.Inverse(global_pose_.latitude, global_pose_.longitude, home_info_.geo.latitude, home_info_.geo.longitude, home_dist);
 
                 // exit condition
                 if(prev_wp.wp_seq == num_wp){
-                    if(verbose)     echo("  Reached last waypoint, validating home");
-                    if(home_dist < gps_error){
-                        if(verbose)   echo("   Reached LZ, mission over.");
-                        PkgAttached=false;
+                    if(verbose)     echo("  Reached last waypoint");
+                    PkgAttached = false;        // remove this, should happen automatically
 
-                        if(!PkgAttached){
-                            if(verbose)   echo("   No package attached, switching from Mission mode");
-                            while (mode_set_){
-                                mission_msg.header.stamp = ros::Time::now();
-                                mission_msg.point = mav_pose_.pose.pose.position;
+                    if(!PkgAttached){
+                        if(verbose)   echo("   No package attached, switching from Mission mode");
+                        while (mode_set_){
+                            mission_msg.header.stamp = ros::Time::now();
+                            mission_msg.point = mav_pose_.pose.pose.position;
 
-                                command_pub_.publish(mission_msg);
+                            command_pub_.publish(mission_msg);
 
-                                if(set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) mode_set_ = false;
-                                loopRate.sleep();
-                            }
-                            if(verbose)   echo("   Switched to Offboard");
-
-                            ContMission = false;
-                            return;
+                            if(set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) mode_set_ = false;
+                            loopRate.sleep();
                         }
+                        if(verbose)   echo("   Switched to Offboard");
+                        ContMission = HoverMode = false;
+                        return;
                     }
                 }
                 loopRate.sleep();
@@ -311,9 +282,8 @@ namespace state_machine{
                 ros::spinOnce();
 
                 mission_msg.header.stamp = ros::Time::now();
-                mission_msg.point.x = mav_pose_.pose.pose.position.x;
-                mission_msg.point.y = mav_pose_.pose.pose.position.y;
-                mission_msg.point.z = hover_height;
+                mission_msg.point = mav_pose_.pose.pose.position;
+
                 command_pub_.publish(mission_msg);
                 
                 while(mav_mode_.mode == "AUTO.MISSION"){
@@ -328,6 +298,7 @@ namespace state_machine{
 
             if(drop_info_.loc_type == "Hover") HoverMode = true;
             else HoverMode = false;
+            prev_drop_id = drop_info_.id;
             
             return;
         }
@@ -349,7 +320,10 @@ namespace state_machine{
             if(verbose)   echo("  Received drop location");
             
             mission_msg.header.stamp = ros::Time::now();
-            mission_msg.point = drop_info_.position;
+            mission_msg.point.x = drop_info_.position.x;
+            mission_msg.point.y = drop_info_.position.y;
+            mission_msg.point.z = hover_height;
+
             if(verbose)   echo("   Mission location: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y << " type " << drop_info_.loc_type);
  
             command_pub_.publish(mission_msg);
@@ -446,18 +420,45 @@ namespace state_machine{
 
             geometry_msgs::PointStamped mission_msg;
 
-            home_info_.position.z = -DBL_MAX;
+            mav_utils_msgs::signal stop;
+            stop.request.signal = 0;
+            if(detector_client.call(stop) && stop.response.success)
+            {
+                if(verbose)    echo("  detector node stopped");
+            }
+
+            home_info_.point.z = -DBL_MAX;
             if(verbose)   echo("  Waiting for Home location");
-            while(home_info_.position.z == -DBL_MAX){
+            while(home_info_.point.z == -DBL_MAX){
                 ros::spinOnce();
                 loopRate.sleep();
             }
             if(verbose)   echo("  Home location received");
 
+            utm_pose_.pose.position.z = -DBL_MAX;
+            if(verbose)   echo("  Waiting for UTM position");
+            while (utm_pose_.pose.position.z == -DBL_MAX)
+            {
+                ros::spinOnce();
+                loopRate.sleep();
+            }
+            if(verbose)   echo("  Received UTM position");
+
+            if(verbose)   echo("  Waiting for odometry");
+            mav_pose_.pose.pose.position.z = -DBL_MAX;
+            while (mav_pose_.pose.pose.position.z == -DBL_MAX)
+            {
+                ros::spinOnce();
+                loopRate.sleep();
+            }
+            if(verbose)   echo("  Received odometry");
+
             mission_msg.header.stamp = ros::Time::now();
-            mission_msg.point.x = home_info_.position.x;
-            mission_msg.point.y = home_info_.position.y;
+            mission_msg.point.x = home_info_.point.x + mav_pose_.pose.pose.position.x - utm_pose_.pose.position.x;
+            mission_msg.point.y = home_info_.point.y + mav_pose_.pose.pose.position.y - utm_pose_.pose.position.y;
             mission_msg.point.z = hover_height;
+
+            if(verbose)   echo("   Home location: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y);
 
             command_pub_.publish(mission_msg);
             return;
@@ -533,12 +534,8 @@ namespace state_machine{
             ros::Rate loopRate(10);
             // rewrite
 
-            mav_utils_msgs::signal stop, start;
-            stop.request.signal = 0;
-            start.request.signal = 1;
-            if(detector_client.call(stop) && stop.response.success){
-                if(verbose)   echo("  detector node stopped");
-            }
+            mav_utils_msgs::signal start;
+            start.request.signal = 0;
             if(helipad_client.call(start) && start.response.success){
                 if(verbose)   echo("  hdetect node started");
             }
@@ -613,30 +610,30 @@ namespace state_machine{
             bool AtLoc = false;
             ros::Rate loopRate(10);
 
-            home_info_.geo.latitude = -DBL_MAX;
+            home_info_.point.z = -DBL_MAX;
             if(verbose)   echo("  Waiting for home location");
-            while(home_info_.geo.latitude == -DBL_MAX){
+            while(home_info_.point.z == -DBL_MAX){
                 ros::spinOnce();
                 loopRate.sleep();
             }
             if(verbose)   echo("  Received home location");
 
-            if(verbose)   echo("  Waiting for GPS position");
-            global_pose_.latitude = -DBL_MAX;
-            while(global_pose_.latitude == -DBL_MAX){
+            if(verbose)   echo("  Waiting for odometry");
+            mav_pose_.pose.pose.position.z = -DBL_MAX;
+            while (mav_pose_.pose.pose.position.z == -DBL_MAX)
+            {
                 ros::spinOnce();
                 loopRate.sleep();
             }
-            if(verbose)   echo("  Received GPS postion");
+            if(verbose)   echo("  Received odometry");
 
             if(verbose)   echo("  Enroute to LZ, please wait");
             while(!AtLoc){
                 ros::spinOnce();
-                geod.Inverse(global_pose_.latitude, global_pose_.longitude, home_info_.geo.latitude, home_info_.geo.longitude, dist);
-                AtLoc = (dist > gps_error) ? false : true;
+                dist = sq(mav_pose_.pose.pose.position.x - drop_info_.position.x) + sq(mav_pose_.pose.pose.position.y - drop_info_.position.y);
+                AtLoc = (dist > sq(loc_error)) ? false : true;
                 loopRate.sleep();
             }
-
             AtLZ = AtLoc;
             return AtLoc;
         }
@@ -668,7 +665,7 @@ namespace state_machine{
             while(!AtLoc){
                 ros::spinOnce();
                 dist = sq(mav_pose_.pose.pose.position.x - drop_info_.position.x) + sq(mav_pose_.pose.pose.position.y - drop_info_.position.y);
-                AtLoc = (dist > loc_error) ? false : true;
+                AtLoc = (dist > sq(loc_error)) ? false : true;
                 loopRate.sleep();
             }
 

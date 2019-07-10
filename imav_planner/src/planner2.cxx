@@ -7,7 +7,6 @@ int main(int argc, char** argv)
 
     ph.getParam("verbose", verbose);
     
-    ph.getParam("error/gps", gps_error);
     ph.getParam("error/local", loc_error);
 
     ph.getParam("height/hover", hover_height);
@@ -47,7 +46,7 @@ int main(int argc, char** argv)
         machine.process_event(state_machine::CmdHover());         
         if(verbose)    state_machine::echo_state(machine);
 
-        if(state_machine::PkgAttached)
+        if(state_machine::PkgAttached || state_machine::HoverMode)
         {   
             transitRate.sleep();       
             machine.process_event(state_machine::CmdGotoDrop());      
@@ -72,10 +71,11 @@ int main(int argc, char** argv)
             transitRate.sleep();       
             machine.process_event(state_machine::CmdAscent());        
             if(verbose)    state_machine::echo_state(machine);
-            
-            if(!state_machine::PkgAttached)
+
+            if(!state_machine::PkgAttached && !state_machine::HoverMode)
             {
                 state_machine::ContMission = false;
+                machine.drop_info_sub_.shutdown();
                 
                 transitRate.sleep();       
                 machine.process_event(state_machine::CmdGotoLZ());        
@@ -127,6 +127,7 @@ int main(int argc, char** argv)
                 }
                 
                 state_machine::ContMission = true;
+                machine.drop_info_sub_ = machine.nh.subscribe("drop_info", 10, drop_info_cb_);
             }
         }
     }

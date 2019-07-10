@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
    
-    <arg name="mav_name" default="spedix"/>
+    <arg name="mav_name" default="magnus"/>
    
     <group ns="$(arg mav_name)">
    
@@ -23,5 +23,6 @@
         </node>
    
     </group>
+    
     
 </launch>
