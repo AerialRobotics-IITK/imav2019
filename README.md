@@ -85,6 +85,14 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 ## Lectures
 - MAVLink Protocol
 - Transformations
+
+## Testing Cases
+- Blue Quad has delivered and since it has the size and capability to carry yellow package, should it go back to home base and pick up yellow package for delivery or just keep on Exploring?
+- Travel over long distances (away from Planned Mission) to go and deliver package.
+- Say red quad is detecting yellow mailbox and confirming its position and during that time yellow quad sends location of red mailbox, then the red quad should not divert from ongoing task to go and deliver the red package. Delivery should only be done from Explore state.
+- Multiple mailboxes detected in same camera-frame.
+- Red Quad's exploring is over but the red mailbox is not yet detected, then the red quad should not go and land, it should stay put in exploring mode and wait for red mailbox's location. Landing should only be done when whole mission is explored and package has been dropped.
+- Multiple Quads detect the same mailbox.
 - 
 
 ## Issues
