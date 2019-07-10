@@ -93,6 +93,9 @@ Please mention date of completion and name of task-doer (for easy follow-up) whe
 - Multiple mailboxes detected in same camera-frame of one quad.
 - Red Quad's exploring is over but the red mailbox is not yet detected, then the red quad should not go and land, it should stay put in exploring mode and wait for red mailbox's location. Landing should only be done when whole mission is explored and package has been dropped.
 - Multiple Quads detect the same mailbox.
+- Battery optimization
+- Quad should not abandon current task when it receives data for some other task. It should proceed for that task after completing the ongoing task.
+- Yellow quad comes back to home base to pick up second package, optimize this task.
 - 
 
 ## Issues
