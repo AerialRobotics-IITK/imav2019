@@ -49,10 +49,10 @@ void r2Callback(const mav_utils_msgs::RouterInfo& msg){
 }
 
 void updateTable(){
-    if(verbose) echo("Updating table");
+    //if(verbose) echo("Updating table");
 
     int num, drops;
-    if(verbose) echo(" Processing detector data");
+    //if(verbose) echo(" Processing detector data");
     for(int i=0; i<obj_data.object_poses.size(); i++){
         num = drops = -1;
         if(obj_data.object_poses.at(i).store){
@@ -81,26 +81,32 @@ void updateTable(){
                 // objects[num].publish = true;
                 objects[num].x = obj_data.object_poses.at(i).position.x - odom.pose.pose.position.x + utm_pose.pose.position.x; 
                 objects[num].y = obj_data.object_poses.at(i).position.y - odom.pose.pose.position.y + utm_pose.pose.position.y;
+                if(verbose) echo("  Stored from detector x = " << objects[num].x << ", y = " << objects[num].y << ", drops = " << drops << " at array pos = " << num);
             }
-
-            if(verbose) echo("  Stored x = " << objects[num].x << ", y = " << objects[num].y << ", drops = " << drops << " at array pos = " << num);
         }
     }
 
-    if(verbose) echo(" Processing data from other routers");
+    //if(verbose) echo(" Processing data from other routers");
     for(int i=0; i<numQuads - 1; i++){
         for(int j=0; j<routerData[i].size(); j++){
-            ids[0][routerData[i].at(j).id] = 1;
+            if(ids[0][routerData[i].at(j).id] == 0){
+                ids[0][routerData[i].at(j).id] = 1;
 
-            struct locData data;
-            data.drops = routerData[i].at(j).position.z;
-            data.x = routerData[i].at(j).position.x;
-            data.y = routerData[i].at(j).position.y;
-            // data.publish = false;
+                struct locData data;
+                data.drops = routerData[i].at(j).position.z;
+                data.x = routerData[i].at(j).position.x;
+                data.y = routerData[i].at(j).position.y;
+                // data.publish = false;
+                
+                if(routerData[i].at(j).id == id){
+                    received = true;
+                    data.drops = 1;
+                }
+                objects[routerData[i].at(j).id] = data;
 
-            objects[routerData[i].at(j).id] = data;
-            if(routerData[i].at(j).id == id) received = true;
-            if(verbose) echo("  Stored x = " << data.x << ", y = " << data.y << ", drops = " << data.drops << " at array pos = " << routerData[i].at(j).id);
+                if(verbose)
+                    echo("  Stored x = " << objects[routerData[i].at(j).id].x << ", y = " << objects[routerData[i].at(j).id].y << ", drops = " << objects[routerData[i].at(j).id].drops << " at array pos = " << routerData[i].at(j).id);
+            }
         }
     }
 
@@ -108,7 +114,7 @@ void updateTable(){
 }
 
 void updateRouters(ros::Publisher *pub){
-    if(verbose) echo("Updating routers");
+    //if(verbose) echo("Updating routers");
 
     mav_utils_msgs::RouterInfo info_msg;
     mav_utils_msgs::RouterData data;
@@ -116,9 +122,9 @@ void updateRouters(ros::Publisher *pub){
     for(int i=0; i<numObjects; i++){
         info_msg.object_id.push_back(ids[0][i]);
         if(ids[0][i] == 1 && (ids[1][i] == 0 || ids[2][i] == 0)){
-            if(verbose) echo(" Publishing to other routers");
+            //if(verbose) echo(" Publishing to other routers");
             data.id = i;
-            data.position.z = (i>0 && i<4) ? 1 : 1;
+            data.position.z = 0;
             data.position.x = objects[i].x;
             data.position.y = objects[i].y;
             info_msg.router_data.push_back(data);
@@ -136,13 +142,12 @@ void publishTask(ros::Publisher *pub){
     if(curr_state == "Drop") objects[pubId].drops -= 1;
 
     if(curr_state != "Exploring") return;
-    if(verbose) echo("Publishing tasks");
+    //if(verbose) echo("Publishing tasks");
 
     mav_utils_msgs::TaskInfo task;
     int num=-1;
-
     if(obj_data.object_poses.size() > 0){
-        if(verbose) echo(" Processing detector data");
+        //if(verbose) echo(" Processing detector data");
         task.header.stamp = ros::Time::now();
         task.position.x = obj_data.object_poses.at(0).position.x;
         task.position.y = obj_data.object_poses.at(0).position.y;
@@ -177,20 +182,22 @@ void publishTask(ros::Publisher *pub){
             pubId = num;
             if(verbose) echo("  Published from detector: loc_type = " << task.loc_type << ", position: x = " << task.position.x << ", y = " << task.position.y << ", z = " << task.position.z);
         }
-        return;
     }
-    else if(objects[id].drops > 0 && received){
-        if(verbose) echo(" Publishing from table");
+    if(objects[id].drops > 0 && received){
+        //if(verbose) echo(" Publishing from table");
         task.header.stamp = ros::Time::now();
         task.loc_type = "Drop";
+        task.id = -id*10;
         task.position.x = objects[id].x + odom.pose.pose.position.x - utm_pose.pose.position.x;
         task.position.y = objects[id].y + odom.pose.pose.position.y - utm_pose.pose.position.y;
         task.position.z = 0;
         pub->publish(task);
         pubId = id;
         echo("  Published from table: loc_type = " << task.loc_type << ", position: x = " << task.position.x << ", y = " << task.position.y << ", z = " << task.position.z);
-        return;
+        if (verbose)
+            echo("OI " << objects[id].x << " " << objects[id].y);
     }
+    return;
 }
 
 int main(int argc, char** argv){
@@ -217,7 +224,7 @@ int main(int argc, char** argv){
         }
     }
 
-    for(int i=0; i < numObjects; i++) objects[i].drops = 1;
+    for(int i = 0; i < numObjects; i++) objects[i].drops = 1;
 
     ros::NodeHandle routers[numQuads] = {"/" + names[id-1], "/" + names[(id)%numQuads], "/" + names[(id+1)%numQuads]};
     

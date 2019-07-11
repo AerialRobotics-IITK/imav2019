@@ -32,7 +32,7 @@
 #define sq(X) (X)*(X)
 
 // storage variables
-nav_msgs::Odometry mav_pose_;
+nav_msgs::Odometry mav_pose_, mav_pose_temp_;
 mav_utils_msgs::UTMPose utm_pose_;
 mav_utils_msgs::BBPoses obj_data, helipad;
 mav_utils_msgs::TaskInfo drop_info_;
@@ -291,6 +291,7 @@ namespace state_machine{
                     ros::spinOnce();
                 }
                 if(verbose)   echo("   Offboard enabled");
+                mav_pose_temp_ = mav_pose_;
 
                 loopRate.sleep();
             }
@@ -335,6 +336,8 @@ namespace state_machine{
             ros::Rate loopRate(10);
 
             bool DescentDone = false;
+            obj_data.object_poses.clear();
+            
             geometry_msgs::PointStamped mission_msg;
 
             if(verbose)   echo("  Checking for drop location");
@@ -359,19 +362,24 @@ namespace state_machine{
             if(drop_info_.loc_type == "Drop"){
                 if(verbose)   echo("  Starting descent");
 
+                echo("Descent0: " << DescentDone);
                 while(!DescentDone){
                     mission_msg.header.stamp = ros::Time::now();
                     if(obj_data.object_poses.size()>0){
+                        echo("Descent-: " << DescentDone);
                         for(i = 0; i < obj_data.object_poses.size(); i++){
                             if(obj_data.object_poses.at(i).type == drop_info_.id) break;
                         }
+                        echo("Descent--: " << DescentDone);
                         mission_msg.point.x = obj_data.object_poses.at(i).position.x;
                         mission_msg.point.y = obj_data.object_poses.at(i).position.y;
+                        echo("Descent1: " << DescentDone);
                     }
                     else{
                         mission_msg.point.x = mav_pose_.pose.pose.position.x;
                         mission_msg.point.y = mav_pose_.pose.pose.position.y;
                     }
+                    echo("Descent2: " << DescentDone);
                     mission_msg.point.z = mav_pose_.pose.pose.position.z - descent_step;
                     command_pub_.publish(mission_msg);
                     DescentDone = (mav_pose_.pose.pose.position.z > drop_height) ? false : true;
@@ -408,8 +416,8 @@ namespace state_machine{
                     ros::spinOnce();
                     loopRate.sleep();
                 }
-            } 
-            
+            }
+            echo("Descent3: " << DescentDone);
             if(verbose)   echo("  Descent done");
             return;      
         }
@@ -492,23 +500,47 @@ namespace state_machine{
         }
 
         void Ascending(CmdAscent const & cmd){
-            if(HoverMode){
-                if(verbose)     echo("Hover mode, passing through");
-                return;
-            }
-            if(verbose)   echo(" Ascending");
+        
             ros::Rate loopRate(10);
 
+            double dist = 0;
+            bool ReturnToMission = false;
             bool AscentDone = false;
             geometry_msgs::PointStamped mission_msg;
 
-            if(verbose)   echo("  Waiting for odometry");
+            if (verbose)   echo("  Waiting for odometry");
+
             mav_pose_.pose.pose.position.z = -DBL_MAX;
-            while(mav_pose_.pose.pose.position.z == -DBL_MAX){
+            while (mav_pose_.pose.pose.position.z == -DBL_MAX)
+            {
                 ros::spinOnce();
                 loopRate.sleep();
             }
-            if(verbose)   echo("  Received odometry");
+            if (verbose)   echo("  Received odometry");
+
+            if(HoverMode){
+                if(verbose)     echo("Hover mode, passing through");
+                mission_msg.header.stamp = ros::Time::now();
+                mission_msg.point.x = mav_pose_temp_.pose.pose.position.x;
+                mission_msg.point.y = mav_pose_temp_.pose.pose.position.y;
+                mission_msg.point.z = hover_height;
+
+                if (verbose)
+                    echo("   Mission continue location: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y << " type " << drop_info_.loc_type);
+
+                command_pub_.publish(mission_msg);
+                while (!ReturnToMission)
+                {
+                    ros::spinOnce();
+                    dist = sq(mav_pose_.pose.pose.position.x - mav_pose_temp_.pose.pose.position.x) + sq(mav_pose_.pose.pose.position.y - mav_pose_temp_.pose.pose.position.y);
+                    ReturnToMission = (dist > sq(loc_error)) ? false : true;
+                    loopRate.sleep();
+                }
+
+                return;
+            }
+            
+            if(verbose)   echo(" Ascending");
 
             mission_msg.header.stamp = ros::Time::now();
             mission_msg.point.x = mav_pose_.pose.pose.position.x;
@@ -526,6 +558,24 @@ namespace state_machine{
             }
             if(verbose)   echo("  Ascent done");
 
+            mission_msg.header.stamp = ros::Time::now();
+            mission_msg.point.x = mav_pose_temp_.pose.pose.position.x;
+            mission_msg.point.y = mav_pose_temp_.pose.pose.position.y;
+            mission_msg.point.z = hover_height;
+
+            if (verbose)
+                echo("   Mission continue location: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y << " type " << drop_info_.loc_type);
+
+            command_pub_.publish(mission_msg);
+            while (!ReturnToMission)
+            {
+                ros::spinOnce();
+                dist = sq(mav_pose_.pose.pose.position.x - mav_pose_temp_.pose.pose.position.x) + sq(mav_pose_.pose.pose.position.y - mav_pose_temp_.pose.pose.position.y);
+                ReturnToMission = (dist > sq(loc_error)) ? false : true;
+                loopRate.sleep();
+            }
+            if (verbose)
+                echo("  Ascent done");
             return;
         }
 
