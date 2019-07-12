@@ -32,7 +32,7 @@
 #define sq(X) (X)*(X)
 
 // storage variables
-nav_msgs::Odometry mav_pose_;
+nav_msgs::Odometry mav_pose_, return_pose_;
 mav_utils_msgs::UTMPose utm_pose_;
 mav_utils_msgs::BBPoses obj_data, helipad;
 mav_utils_msgs::TaskInfo drop_info_;
@@ -166,7 +166,6 @@ namespace state_machine{
 
         //  service clients
         ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("set_mode");
-        ros::ServiceClient node_client = nh.serviceClient<mav_utils_msgs::signal>("detector/terminate");
         ros::ServiceClient mission_client = nh.serviceClient<mavros_msgs::WaypointPull>("mission/pull");
         ros::ServiceClient detector_client = nh.serviceClient<mav_utils_msgs::signal>("detector/terminate");
         ros::ServiceClient helipad_client = nh.serviceClient<mav_utils_msgs::signal>("hdetect/terminate");
@@ -202,7 +201,7 @@ namespace state_machine{
 
             mav_utils_msgs::signal start;
             start.request.signal = 1;
-            if(node_client.call(start) && start.response.success){
+            if(detector_client.call(start) && start.response.success){
                 if(verbose)   echo("  Started detector node");
             }
 
@@ -291,6 +290,7 @@ namespace state_machine{
                     ros::spinOnce();
                 }
                 if(verbose)   echo("   Offboard enabled");
+                return_pose_ = mav_pose_;
 
                 loopRate.sleep();
             }
@@ -336,6 +336,7 @@ namespace state_machine{
 
             bool DescentDone = false;
             geometry_msgs::PointStamped mission_msg;
+            obj_data.object_poses.clear();
 
             if(verbose)   echo("  Checking for drop location");
             if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){ 
@@ -481,20 +482,17 @@ namespace state_machine{
             angle_msg.data = false;
             gripper_pub_.publish(angle_msg);
             
-            if(verbose)   echo("  Servo angle set to " << angle_msg.data);
+            if(verbose)   echo("  Servo angle set to " << (int) angle_msg.data);
             
             PkgAttached = false;
             return;
         }
 
         void Ascending(CmdAscent const & cmd){
-            if(HoverMode){
-                if(verbose)     echo("Hover mode, passing through");
-                return;
-            }
-            if(verbose)   echo(" Ascending");
             ros::Rate loopRate(10);
 
+            double dist = 0;
+            bool ReturnDone = false;
             bool AscentDone = false;
             geometry_msgs::PointStamped mission_msg;
 
@@ -506,21 +504,43 @@ namespace state_machine{
             }
             if(verbose)   echo("  Received odometry");
 
+            if(HoverMode){
+                if(verbose)   echo("  Hover mode, passing through ascent");
+            }
+            else{
+                mission_msg.header.stamp = ros::Time::now();
+                mission_msg.point.x = mav_pose_.pose.pose.position.x;
+                mission_msg.point.y = mav_pose_.pose.pose.position.y;
+                mission_msg.point.z = hover_height;
+
+                if(verbose)   echo("  Starting ascent");
+
+                command_pub_.publish(mission_msg);
+
+                while(!AscentDone){
+                    ros::spinOnce();
+                    AscentDone = (mav_pose_.pose.pose.position.z < hover_height) ? false : true;
+                    loopRate.sleep();
+                }
+                if(verbose)   echo("  Ascent done");
+            }
+
             mission_msg.header.stamp = ros::Time::now();
-            mission_msg.point.x = mav_pose_.pose.pose.position.x;
-            mission_msg.point.y = mav_pose_.pose.pose.position.y;
+            mission_msg.point.x = return_pose_.pose.pose.position.x;
+            mission_msg.point.y = return_pose_.pose.pose.position.y;
             mission_msg.point.z = hover_height;
 
-            if(verbose)   echo("  Starting ascent");
-
-            command_pub_.publish(mission_msg);
+            if(verbose)   echo("  Returning to mission at: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y);
+            if(verbose)   echo("  Starting return to mission");
             
-            while(!AscentDone){
+            command_pub_.publish(mission_msg);
+            while(!ReturnDone){
                 ros::spinOnce();
-                AscentDone = (mav_pose_.pose.pose.position.z < hover_height) ? false : true;
+                dist = sq(mav_pose_.pose.pose.position.x - return_pose_.pose.pose.position.x) + sq(mav_pose_.pose.pose.position.y - return_pose_.pose.pose.position.y);
+                ReturnDone = (dist > sq(loc_error)) ? false : true;
                 loopRate.sleep();
             }
-            if(verbose)   echo("  Ascent done");
+            if(verbose) echo("  Return done");
 
             return;
         }

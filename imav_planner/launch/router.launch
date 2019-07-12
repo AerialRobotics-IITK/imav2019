@@ -12,9 +12,10 @@
             <param name="mav_name" value="$(arg mav_name)"/>
 
             <!-- subscribers -->
+            <remap from="odometry" to="odom"/>
             <remap from="objects" to="object_poses"/>
             <remap from="curr_state" to="planner/curr_state"/>
-            <remap from="global_pose" to="pilot/global_position/global"/>
+            <remap from="utm_pose" to="utm_pose"/>
 
             <!-- publishers -->
             <remap from="task" to="drop_info"/>
