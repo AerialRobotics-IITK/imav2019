@@ -437,7 +437,7 @@ namespace state_machine{
 
             utm_pose_.pose.position.z = -DBL_MAX;
             if(verbose)   echo("  Waiting for UTM position");
-            while(utm_pose_.pose.position.z == -DBL_MAX{
+            while(utm_pose_.pose.position.z == -DBL_MAX){
                 ros::spinOnce();
                 loopRate.sleep();
             }
