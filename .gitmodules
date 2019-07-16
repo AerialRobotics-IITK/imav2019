@@ -7,3 +7,6 @@
 [submodule "imav_avoidance"]
 	path = imav_avoidance
 	url = https://github.com/gajena/imav_avoidance
+[submodule "imav_detector/helipad_detect"]
+	path = imav_detector/helipad_detect
+	url = https://github.com/amartyadash/helipad_det.git
