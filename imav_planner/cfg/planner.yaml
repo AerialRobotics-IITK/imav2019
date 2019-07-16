@@ -10,9 +10,9 @@ height:
   step: 0.04
 
 servo:
-  open: 40
-  close: 140
-  static: 90
+  open: -0.8
+  close: 0.8
+  static: 0
 
 delay:
   transition: 5.0

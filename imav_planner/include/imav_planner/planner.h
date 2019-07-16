@@ -5,15 +5,14 @@
 #include <geometry_msgs/PointStamped.h>
 
 #include <std_srvs/Empty.h>
-#include <std_msgs/Bool.h>
 #include <std_msgs/UInt16.h>
-#include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
 
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/HomePosition.h>
 #include <mavros_msgs/WaypointPull.h>
 #include <mavros_msgs/WaypointReached.h>
+#include <mavros_msgs/GripperServo.h>
 #include <mavros_msgs/State.h>
 
 #include <mav_utils_msgs/TaskInfo.h>
@@ -39,7 +38,6 @@ mav_utils_msgs::TaskInfo drop_info_;
 geometry_msgs::PointStamped home_info_;
 mavros_msgs::WaypointReached prev_wp;
 mavros_msgs::State mav_mode_;
-std_msgs::Bool gripper_status_;
 
 // error for location comparison
 double loc_error = 0.05;
@@ -152,7 +150,7 @@ namespace state_machine{
 
         // publishers
         ros::Publisher command_pub_ = nh.advertise<geometry_msgs::PointStamped>("mission_info", 10);
-        ros::Publisher gripper_pub_ = nh.advertise<std_msgs::Bool>("servo", 1);
+        ros::Publisher gripper_pub_ = nh.advertise<mavros_msgs::GripperServo>("servo", 1);
 
         // subscribers
         ros::Subscriber drop_info_sub_ = nh.subscribe("drop_info", 1, drop_info_cb_);
@@ -176,17 +174,14 @@ namespace state_machine{
         void TakeOff(CmdTakeOff const & cmd){
             if(verbose)   echo(" Starting execution");
 
-            // std_msgs::Bool angle_msg;
-            // if(verbose)    echo("  Setting servo angle");
-            // angle_msg.data = close_angle;
-
             if(verbose)   echo("   Publishing servo command");
-            std_msgs::Bool angle_msg;
-            angle_msg.data = true;
-            gripper_pub_.publish(angle_msg);
+            mavros_msgs::GripperServo gripper_msg;
+            gripper_msg.frame_stamp = ros::Time::now();
+            gripper_msg.servo_setpoint = close_angle;
+            gripper_pub_.publish(gripper_msg);
             if(verbose)   echo("   Published servo command");
             
-            if(verbose)   echo("  Servo angle set to " << (int) angle_msg.data);
+            if(verbose)   echo("  Servo angle set to " << (int) gripper_msg.servo_setpoint);
 
             PkgAttached = true;
 
@@ -474,15 +469,12 @@ namespace state_machine{
             }
             if(verbose)   echo(" Dropping Package");
 
-            // std_msgs::UInt16 angle_msg;
-            // if(verbose)    echo("  Setting servo angle");
-            // angle_msg.data = open_angle;
-
-            std_msgs::Bool angle_msg;
-            angle_msg.data = false;
-            gripper_pub_.publish(angle_msg);
+            mavros_msgs::GripperServo gripper_msg;
+            gripper_msg.frame_stamp = ros::Time::now();
+            gripper_msg.servo_setpoint = open_angle;
+            gripper_pub_.publish(gripper_msg);
             
-            if(verbose)   echo("  Servo angle set to " << (int) angle_msg.data);
+            if(verbose)   echo("  Servo angle set to " << (int) gripper_msg.servo_setpoint);
             
             PkgAttached = false;
             return;
