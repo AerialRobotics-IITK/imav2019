@@ -1,11 +1,11 @@
 verbose: true
 
 error:
-  local: 0.3
+  local: 0.30
 
 height:
   hover: 4.0
-  drop: 0.60
+  drop: 3.0
   land: 0.31
   step: 0.04
 
@@ -20,6 +20,6 @@ delay:
   pitStop: 20.0
 
 names:
-  red: spedix
-  yellow: f450
+  red: f450
+  yellow: spedix
   blue: magnus

@@ -84,10 +84,11 @@ int main(int argc, char **argv)
     machine.process_event(state_machine::CmdHover());       
     if(verbose)   state_machine::echo_state(machine);
     
-    transitRate.sleep();       
+   /* transitRate.sleep();       
     machine.process_event(state_machine::CmdDescent());     
     if(verbose)   state_machine::echo_state(machine);
-    
+   */
+ 
     transitRate.sleep();       
     machine.process_event(state_machine::CmdLand());        
     if(verbose)   state_machine::echo_state(machine);

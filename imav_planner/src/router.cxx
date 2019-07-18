@@ -81,9 +81,8 @@ void updateTable(){
                 // objects[num].publish = true;
                 objects[num].x = obj_data.object_poses.at(i).position.x - odom.pose.pose.position.x + utm_pose.pose.position.x; 
                 objects[num].y = obj_data.object_poses.at(i).position.y - odom.pose.pose.position.y + utm_pose.pose.position.y;
-            }
-
-            if(verbose) echo("  Stored from detector x = " << objects[num].x << ", y = " << objects[num].y << ", drops = " << drops << " at array pos = " << num);
+            	//if(verbose) echo("  Stored from detector x = " << objects[num].x << ", y = " << objects[num].y << ", drops = " << drops << " at array pos = " << num);
+	    }
         }
     }
 

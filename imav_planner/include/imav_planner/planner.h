@@ -38,6 +38,7 @@ mav_utils_msgs::TaskInfo drop_info_;
 geometry_msgs::PointStamped home_info_;
 mavros_msgs::WaypointReached prev_wp;
 mavros_msgs::State mav_mode_;
+geometry_msgs::PointStamped home_msg_;
 
 // error for location comparison
 double loc_error = 0.05;
@@ -451,6 +452,7 @@ namespace state_machine{
             mission_msg.point.z = hover_height;
 
             if(verbose)   echo("  Home location: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y);
+            home_msg_ = mission_msg;
 
             command_pub_.publish(mission_msg);
             return;
@@ -572,13 +574,10 @@ namespace state_machine{
             while(!LandingDone){
                 mission_msg.header.stamp = ros::Time::now();
                 if(helipad.object_poses.size()>0){
-                    for(i=0; i < helipad.object_poses.size(); i++){
-                        if(helipad.object_poses.at(i).type == 0) break;         // helipad type = 0
-                    }
-                    mission_msg.point.x = helipad.object_poses.at(i).position.x;
-                    mission_msg.point.y = helipad.object_poses.at(i).position.y;
+                    mission_msg.point.x = helipad.object_poses.at(0).position.x;
+                    mission_msg.point.y = helipad.object_poses.at(0).position.y;
                 }
-                else{
+		else{
                     mission_msg.point.x = mav_pose_.pose.pose.position.x;
                     mission_msg.point.y = mav_pose_.pose.pose.position.y;
                 }
@@ -637,7 +636,7 @@ namespace state_machine{
             if(verbose)   echo("  Enroute to LZ, please wait");
             while(!AtLoc){
                 ros::spinOnce();
-                dist = sq(mav_pose_.pose.pose.position.x - drop_info_.position.x) + sq(mav_pose_.pose.pose.position.y - drop_info_.position.y);
+                dist = sq(mav_pose_.pose.pose.position.x - home_msg_.point.x) + sq(mav_pose_.pose.pose.position.y - home_msg_.point.y);
                 AtLoc = (dist > sq(loc_error)) ? false : true;
                 loopRate.sleep();
             }
@@ -760,7 +759,7 @@ namespace state_machine{
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
                   row<    Descent       ,  CmdDrop      ,  Drop          ,  &fsm::Dropping    ,  &fsm::HasPkg           >,
                   row<    Descent       ,  CmdAscent    ,  Hover         ,  &fsm::Ascending   ,  &fsm::NoPkg            >,
-                  row<    Descent       ,  CmdLand      ,  Rest          ,  &fsm::Landing     ,  &fsm::StopMission      >,
+                  row<    Hover         ,  CmdLand      ,  Rest          ,  &fsm::Landing     ,  &fsm::StopMission      >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
                   row<    Drop          ,  CmdDropOver  ,  Descent       ,  &fsm::DropOver    ,  &fsm::NoPkg            >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
