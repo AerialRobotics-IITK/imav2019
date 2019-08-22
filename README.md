@@ -1,3 +1,17 @@
+# Installation
+* initialize workspace
+```shell
+    mkdir -p ~/catkin_ws/src
+    cd ~/catkin_ws
+    catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
+    catkin init  # initialize your catkin workspace
+    cd ~/catkin_ws/src
+    git clone git@github.com:gajena/imav2019.git
+    wstool init . ./imav2019/install/install_https.rosinstall
+    wstool update
+```
+
+
 # Progress Tracker
 
 Tracking all tasks, issues and references here.
