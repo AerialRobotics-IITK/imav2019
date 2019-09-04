@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <future>
+#include <chrono>
 
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PointStamped.h>
@@ -29,6 +30,8 @@
 
 #define echo(X) std::cout << X << std::endl
 #define sq(X) (X)*(X)
+
+typedef std::chrono::steady_clock clock;
 
 // storage variables
 nav_msgs::Odometry mav_pose_, return_pose_;
@@ -61,6 +64,7 @@ double eq_angle = 90;
 double hover_time = 5.0;
 double transition_time = 5.0;
 double wait_time = 20.0;
+double exit_time = 20.0;
 
 // callback functions
 
@@ -152,6 +156,7 @@ namespace state_machine{
         // publishers
         ros::Publisher command_pub_ = nh.advertise<geometry_msgs::PointStamped>("mission_info", 10);
         ros::Publisher gripper_pub_ = nh.advertise<mavros_msgs::GripperServo>("servo", 1);
+        ros::Publisher pose_pub_ = nh.advertise<mav_utils_msgs::BBPoses>("object_poses", 1);
 
         // subscribers
         ros::Subscriber drop_info_sub_ = nh.subscribe("drop_info", 1, drop_info_cb_);
@@ -378,12 +383,16 @@ namespace state_machine{
             }
             else if(drop_info_.loc_type == "Hover"){
                 if(verbose)   echo("  Starting hover over target");
+                clock::time_point stop = clock::now() + std::chrono::seconds(exit_time);
+                mav_utils_msgs::BBPose data; int imageID;
                 while(!DescentDone){
                     mission_msg.header.stamp = ros::Time::now();
                     if(obj_data.object_poses.size()>0){
                         for(i = 0; i < obj_data.object_poses.size(); i++){
                             if(obj_data.object_poses.at(i).type == drop_info_.id) break;
                         }
+                        data = obj_data.object_poses.at(i);
+                        imageID = obj_data.imageID;
                         mission_msg.point.x = obj_data.object_poses.at(i).position.x;
                         mission_msg.point.y = obj_data.object_poses.at(i).position.y;
                     }
@@ -393,7 +402,17 @@ namespace state_machine{
                     }
                     mission_msg.point.z = mav_pose_.pose.pose.position.z;
                     command_pub_.publish(mission_msg);
-                    if(obj_data.object_poses.size()>0){
+                    if(clock::now() > stop){
+                        if(verbose)     echo("Time's up!");
+                        obj_data.object_poses.clear();
+                        data.store = true; DescentDone = true;
+                        obj_data.object_poses.push_back(data);
+                        obj_data.imageID = imageID;
+                        obj_data.stamp = ros::Time::now();
+                        pose_pub_.publish(obj_data);
+                        break;
+                    }
+                    else if(obj_data.object_poses.size()>0){
                         for(int j=0; j < obj_data.object_poses.size(); j++){
                             if(obj_data.object_poses.at(j).type == drop_info_.id){
                                 DescentDone = obj_data.object_poses.at(j).store;

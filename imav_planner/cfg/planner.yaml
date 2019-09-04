@@ -18,6 +18,7 @@ delay:
   transition: 5.0
   hover: 5.0
   pitStop: 20.0
+  exit: 20.0
 
 names:
   red: f450
