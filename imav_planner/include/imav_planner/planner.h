@@ -31,8 +31,6 @@
 #define echo(X) std::cout << X << std::endl
 #define sq(X) (X)*(X)
 
-typedef std::chrono::steady_clock clock;
-
 // storage variables
 nav_msgs::Odometry mav_pose_, return_pose_;
 mav_utils_msgs::UTMPose utm_pose_;
@@ -402,7 +400,7 @@ namespace state_machine{
             }
             else if(drop_info_.loc_type == "Hover"){
                 if(verbose)   echo("  Starting hover over target");
-                clock::time_point stop = clock::now() + std::chrono::seconds(exit_time);
+                std::chrono::steady_clock::time_point stop = std::chrono::steady_clock::now() + std::chrono::seconds((int) exit_time);
                 mav_utils_msgs::BBPose data; int imageID;
                 while(!DescentDone){
                     mission_msg.header.stamp = ros::Time::now();
@@ -421,7 +419,7 @@ namespace state_machine{
                     }
                     mission_msg.point.z = mav_pose_.pose.pose.position.z;
                     command_pub_.publish(mission_msg);
-                    if(clock::now() > stop){
+                    if(std::chrono::steady_clock::now() > stop){
                         if(verbose)     echo("Time's up!");
                         obj_data.object_poses.clear();
                         data.store = true; DescentDone = true;
