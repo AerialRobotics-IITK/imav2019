@@ -206,10 +206,13 @@ namespace state_machine{
 
             mavros_msgs::WaypointPull req;
             int num_wp=0;
-            if(mission_client.call(req) && req.response.success){
-                if(verbose)     echo("  Received waypoints");
-                num_wp = req.response.wp_received - 1;
+            while(num_wp == 0)
+            {
+                if(mission_client.call(req) && req.response.success){
+                    num_wp = req.response.wp_received - 1;
+                }
             }
+            if(verbose)     echo("  Received waypoints");
 
             if(verbose)   echo("  Waiting for odometry");
             mav_pose_.pose.pose.position.z = -DBL_MAX;
