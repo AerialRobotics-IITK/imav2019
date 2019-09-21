@@ -426,7 +426,7 @@ namespace state_machine{
                     ros::spinOnce();
                     loopRate.sleep();
                 }
-            
+            }
             if(verbose)   echo("  Descent done");
             return;      
         }
