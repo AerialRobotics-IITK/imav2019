@@ -340,10 +340,6 @@ namespace state_machine{
             geometry_msgs::PointStamped mission_msg;
             obj_data.object_poses.clear();
 
-            mavros_msgs::SetMode land_set_mode;
-            bool mode_set_ = false;
-            land_set_mode.request.custom_mode = "AUTO.LAND";
-
             if(verbose)   echo("  Checking for drop location");
             if(drop_info_.loc_type != "Drop" && drop_info_.loc_type != "Hover"){ 
                 if(verbose)   echo("  Waiting for drop location");
@@ -385,20 +381,6 @@ namespace state_machine{
                     ros::spinOnce();
                     loopRate.sleep();
                 }
-
-                while (!mode_set_)
-                {
-                    ros::spinOnce();
-                    if (set_mode_client.call(land_set_mode) && land_set_mode.response.mode_sent)
-                    {
-                        if (verbose)
-                            echo("   Land enabled");
-                        mode_set_ = true;
-                    }
-                    loopRate.sleep();
-                }
-                if (verbose)
-                    echo("  Changed mode to Land");
 
             }
             else if(drop_info_.loc_type == "Hover"){
@@ -444,21 +426,6 @@ namespace state_machine{
                     ros::spinOnce();
                     loopRate.sleep();
                 }
-
-                while (!mode_set_)
-                {
-                    ros::spinOnce();
-                    if (set_mode_client.call(land_set_mode) && land_set_mode.response.mode_sent)
-                    {
-                        if (verbose)
-                            echo("   Land enabled");
-                        mode_set_ = true;
-                    }
-                    loopRate.sleep();
-                }
-                if (verbose)
-                    echo("  Changed mode to Land");
-            } 
             
             if(verbose)   echo("  Descent done");
             return;      
@@ -597,6 +564,10 @@ namespace state_machine{
             ros::Rate loopRate(10);
             // rewrite
 
+            mavros_msgs::SetMode land_set_mode;
+            bool mode_set_ = false;
+            land_set_mode.request.custom_mode = "AUTO.LAND";
+
             mav_utils_msgs::signal start;
             start.request.signal = 1;
             if(helipad_client.call(start) && start.response.success){
@@ -630,7 +601,7 @@ namespace state_machine{
                     mission_msg.point.x = helipad.object_poses.at(0).position.x;
                     mission_msg.point.y = helipad.object_poses.at(0).position.y;
                 }
-		else{
+		        else{
                     mission_msg.point.x = mav_pose_.pose.pose.position.x;
                     mission_msg.point.y = mav_pose_.pose.pose.position.y;
                 }
@@ -640,7 +611,21 @@ namespace state_machine{
                 ros::spinOnce();
                 loopRate.sleep();
             }
-            if(verbose)   echo("  Landing done");
+            
+            while (!mode_set_)
+            {
+                ros::spinOnce();
+                if (set_mode_client.call(land_set_mode) && land_set_mode.response.mode_sent)
+                {
+                    if (verbose)
+                        echo("   Land enabled");
+                    mode_set_ = true;
+                }
+                loopRate.sleep();
+            }
+
+            if(verbose) echo("  Changed mode to Land");
+            if(verbose) echo("  Landing done");
 
             return;
         }

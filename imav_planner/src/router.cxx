@@ -31,7 +31,7 @@ struct locData{
 
 int ids[numQuads][numObjects];
 struct locData objects[numObjects];
-int types[numObjects] = {42, -10, -20, -30, 10, 20, 30, 69};
+int types[numObjects] = {42, -10, -20, -30, -40, -40, -40, 69};
 int quadTypes[numQuads];
 
 void objCallback(const mav_utils_msgs::BBPoses& msg){obj_data = msg;}
@@ -66,9 +66,9 @@ void updateTable(){
                 case -30: num = 3; drops = 1; break;
 
                 // lost packages
-                case 10: num = 4; drops = 1; break;
-                case 20: num = 5; drops = 1; break;
-                case 30: num = 6; drops = 1; break;
+                case -40: drops = 1; num = 4;
+                          while(ids[0][num] == 1 && num < 7) num++; 
+                          break;
 
                 // crashed drone
                 case 69: num = 7; drops = 1; break;
@@ -169,9 +169,9 @@ void publishTask(ros::Publisher *pub){
                 case -30: num = 3; break;
 
                 // lost packages
-                case 10: num = 4; break;
-                case 20: num = 5; break;
-                case 30: num = 6; break;
+                case -40: num = 4;
+                          while(ids[0][num] == 1 && num < 7) num++; 
+                          break;
 
                 // crashed drone
                 case 69: num = 7; break;
@@ -211,7 +211,7 @@ int main(int argc, char** argv){
     ph.getParam("verbose", verbose);
     ph.getParam("mav_name", mavName);
 
-    // to generalie change to list
+    // to generalize change to list
     ph.getParam("names/red", names[0]);
     ph.getParam("names/yellow", names[1]);
     ph.getParam("names/blue", names[2]);
