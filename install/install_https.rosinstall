@@ -1,3 +1,4 @@
 - git: {local-name: mavros, uri: 'https://github.com/AerialRobotics-IITK/mavros.git'}
 - git: {local-name: mavlink, uri: 'https://github.com/AerialRobotics-IITK/mavlink-gbp-release.git'}
 - git: {local-name: catkin_simple, uri: 'https://github.com/catkin/catkin_simple.git'}
+- git: {local-name: multimaster_fkie, uri: 'https://github.com/parekhaman1807/multimaster_fkie.git'}
