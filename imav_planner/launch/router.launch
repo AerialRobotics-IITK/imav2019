@@ -16,6 +16,7 @@
             <remap from="objects" to="object_poses"/>
             <remap from="curr_state" to="planner/curr_state"/>
             <remap from="utm_pose" to="utm_pose"/>
+            <remap from="gps" to="mavros/global_position/raw/fix"/>
 
             <!-- publishers -->
             <remap from="task" to="drop_info"/>

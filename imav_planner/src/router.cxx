@@ -1,7 +1,9 @@
 #include <ros/ros.h>
+#include <fstream>
 
 #include <std_msgs/String.h>
 #include <nav_msgs/Odometry.h>
+#include <sensor_msgs/NavSatFix.h>
 
 #include <mav_utils_msgs/UTMPose.h>
 #include <mav_utils_msgs/TaskInfo.h>
@@ -18,14 +20,19 @@ std::vector<mav_utils_msgs::RouterData> routerData[numQuads - 1];
 mav_utils_msgs::BBPoses obj_data;
 mav_utils_msgs::UTMPose utm_pose;
 nav_msgs::Odometry odom;
+sensor_msgs::NavSatFix gps;
 bool verbose = true;
+bool saveGPS = true;
 bool received = false;
 int id=-1, pubId = -1;
+std::string gpsPath = "router/gps.txt";
 
 struct locData{
     int drops;
     double x;
     double y;
+    double lat;
+    double lon;
     // bool publish;
 };
 
@@ -36,6 +43,7 @@ int quadTypes[numQuads];
 
 void objCallback(const mav_utils_msgs::BBPoses& msg){obj_data = msg;}
 void utmCallback(const mav_utils_msgs::UTMPose& msg){utm_pose = msg;}
+void gpsCallback(const sensor_msgs::NavSatFix& msg){gps = msg;}
 void odomCallback(const nav_msgs::Odometry& msg){odom = msg;}
 void stateCallback(const std_msgs::String& msg){curr_state = msg.data;}
 
@@ -58,20 +66,20 @@ void updateTable(){
         if(obj_data.object_poses.at(i).store){
             switch(obj_data.object_poses.at(i).type){
                 // house
-                case 42: num = 0; drops = 1; break;
+                case 42: num = 0; drops = 0; break;
 
                 // mailboxes
                 case -10: num = 1; drops = 1; break;
-                case -20: num = 2; drops = 1; break;
+                case -20: num = 2; drops = 2; break;
                 case -30: num = 3; drops = 1; break;
 
                 // lost packages
-                case -40: drops = 1; num = 4;
+                case -40: drops = 0; num = 4;
                           while(ids[0][num] == 1 && num < 7) num++; 
                           break;
 
                 // crashed drone
-                case 69: num = 7; drops = 1; break;
+                case 69: num = 7; drops = 0; break;
                 default: continue;
             }
 
@@ -81,6 +89,8 @@ void updateTable(){
                 // objects[num].publish = true;
                 objects[num].x = obj_data.object_poses.at(i).position.x - odom.pose.pose.position.x + utm_pose.pose.position.x; 
                 objects[num].y = obj_data.object_poses.at(i).position.y - odom.pose.pose.position.y + utm_pose.pose.position.y;
+                objects[num].lat = gps.latitude; objects[num].lon = gps.longitude;
+                if(verbose) echo(" Stored object lat = " << objects[num].lat << " lon = " << objects[num].lon);
             	//if(verbose) echo("  Stored from detector x = " << objects[num].x << ", y = " << objects[num].y << ", drops = " << drops << " at array pos = " << num);
 	        }
         }
@@ -101,6 +111,7 @@ void updateTable(){
                 if(routerData[i].at(j).id == id){
                     received = true;
                     data.drops = 1;
+                    if(id == 2) data.drops = 2;
                 }
                 objects[routerData[i].at(j).id] = data;
     
@@ -201,6 +212,21 @@ void publishTask(ros::Publisher *pub){
     return;
 }
 
+void saveData(){
+    std::ofstream file;
+    file.open(gpsPath);
+    for (int i = 0; i < numObjects; i++){
+        file << std::to_string(types[i]) + " ";
+        if(ids[0][i] == 1){
+            file << std::to_string(objects[i].lat) + " " + std::to_string(objects[i].lon) + " " + std::to_string(objects[i].drops);
+        }
+        else file << "NULL";
+        file << "\n";
+    }
+    file.close();
+    return;
+}
+
 int main(int argc, char** argv){
 
     ros::init(argc, argv, "router");
@@ -210,6 +236,7 @@ int main(int argc, char** argv){
     
     ph.getParam("verbose", verbose);
     ph.getParam("mav_name", mavName);
+    ph.getParam("saveGPS", saveGPS);
 
     // to generalize change to list
     ph.getParam("names/red", names[0]);
@@ -233,6 +260,7 @@ int main(int argc, char** argv){
     ros::Subscriber stateSub = routers[0].subscribe("curr_state", 10, stateCallback);
     ros::Subscriber utmSub = routers[0].subscribe("utm_pose", 10, utmCallback);
     ros::Subscriber odomSub = routers[0].subscribe("odometry", 10, odomCallback);
+    ros::Subscriber gpsSub = routers[0].subscribe("gps", 1, gpsCallback);
     ros::Subscriber subs[numQuads - 1] = {routers[1].subscribe("router/data", 10, r1Callback), routers[2].subscribe("router/data", 10, r2Callback)};
     
     ros::Publisher routerPub = ph.advertise<mav_utils_msgs::RouterInfo>("data", 10);
@@ -246,5 +274,6 @@ int main(int argc, char** argv){
         loopRate.sleep();
     }    
 
+    if(saveGPS) saveData();
     return 0;
 }
