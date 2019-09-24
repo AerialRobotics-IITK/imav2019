@@ -1,4 +1,5 @@
 verbose: true
+saveGPS: true
 
 error:
   local: 0.30
@@ -7,20 +8,25 @@ height:
   hover: 4.0
   drop: 3.0
   land: 0.31
-  step: 0.04
+  step: 0.2
 
 servo:
-  open: -0.8
-  close: 0.8
+  open: 0.8
+  close: -0.8
   static: 0
 
 delay:
-  transition: 5.0
-  hover: 5.0
+  transition: 2.0
+  hover: 3.0
   pitStop: 20.0
-  exit: 20.0
+  exit: 5.0
+  landHover: 10.0
 
 names:
   red: f450
   yellow: spedix
   blue: magnus
+
+house:
+  lat: 0
+  lon: 0
