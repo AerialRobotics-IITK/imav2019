@@ -33,10 +33,10 @@
 
 // storage variables
 nav_msgs::Odometry mav_pose_, return_pose_;
-mav_utils_msgs::UTMPose utm_pose_;
+mav_utils_msgs::UTMPose utm_pose_, home_pose_;
 mav_utils_msgs::BBPoses obj_data, helipad;
 mav_utils_msgs::TaskInfo drop_info_;
-geometry_msgs::PointStamped home_info_;
+// geometry_msgs::PointStamped home_info_;
 mavros_msgs::WaypointReached prev_wp;
 mavros_msgs::State mav_mode_;
 geometry_msgs::PointStamped home_msg_;
@@ -63,11 +63,12 @@ double hover_time = 5.0;
 double transition_time = 5.0;
 double wait_time = 20.0;
 double exit_time = 20.0;
+double land_wait = 10.0;
 
 // callback functions
 
 void mav_pose_cb_(const nav_msgs::Odometry &msg){mav_pose_ = msg;}
-void home_info_cb_(const geometry_msgs::PointStamped &msg){home_info_ = msg;}
+// void home_info_cb_(const geometry_msgs::PointStamped &msg){home_info_ = msg;}
 void drop_info_cb_(const mav_utils_msgs::TaskInfo &msg){drop_info_ = msg;}
 void obj_cb_(const mav_utils_msgs::BBPoses &msg){obj_data = msg;}
 void helipad_cb_(const mav_utils_msgs::BBPoses &msg){helipad = msg;}
@@ -158,7 +159,7 @@ namespace state_machine{
 
         // subscribers
         ros::Subscriber drop_info_sub_ = nh.subscribe("drop_info", 1, drop_info_cb_);
-        ros::Subscriber home_info_sub_ = nh.subscribe("home_info", 1, home_info_cb_);
+        // ros::Subscriber home_info_sub_ = nh.subscribe("home_info", 1, home_info_cb_);
         ros::Subscriber utm_pose_sub_ = nh.subscribe("utm_pose", 1, utm_pose_cb_);
         ros::Subscriber mav_pose_sub_ = nh.subscribe("odometry", 10, mav_pose_cb_);
         ros::Subscriber mission_wp_sub = nh.subscribe("mission/reached", 10, wp_reached_cb_);
@@ -178,6 +179,8 @@ namespace state_machine{
         void TakeOff(CmdTakeOff const & cmd){
             if(verbose)   echo(" Starting execution");
 
+            ros::Rate loopRate(10);
+
             if(verbose)   echo("   Publishing servo command");
             mavros_msgs::GripperServo gripper_msg;
             gripper_msg.frame_stamp = ros::Time::now();
@@ -188,6 +191,15 @@ namespace state_machine{
             if(verbose)   echo("  Servo angle set to " << (int) gripper_msg.servo_setpoint);
 
             PkgAttached = true;
+
+            utm_pose_.pose.position.z = -DBL_MAX;
+            if(verbose)   echo("  Waiting for UTM position");
+            while(utm_pose_.pose.position.z == -DBL_MAX){
+                ros::spinOnce();
+                loopRate.sleep();
+            }
+            if(verbose)   echo("  Received UTM position");
+            home_pose_ = utm_pose_;
 
             return;
         }
@@ -249,7 +261,7 @@ namespace state_machine{
                 // exit condition
                 if(prev_wp.wp_seq == num_wp){
                     if(verbose)     echo("  Reached last waypoint, validating home");
-                    PkgAttached = false;    // remove this, it should happen automatically
+                    // PkgAttached = false;    // remove this, it should happen automatically
 
                     if(!PkgAttached){
                         if(verbose)   echo("   No package attached, switching from Mission mode");
@@ -267,6 +279,7 @@ namespace state_machine{
                         ContMission = HoverMode = false;
                         return;
                     }
+                    else; // what happens when drops are not done when mission ends?
                 }
                 loopRate.sleep();
             }
@@ -443,13 +456,13 @@ namespace state_machine{
                 if(verbose)   echo("  detector node stopped");
             }
             
-            home_info_.point.z = -DBL_MAX;
-            if(verbose)   echo("  Waiting for Home location");
-            while(home_info_.point.z == -DBL_MAX){
-                ros::spinOnce();
-                loopRate.sleep();
-            }
-            if(verbose)   echo("  Home location received");
+            // home_info_.point.z = -DBL_MAX;
+            // if(verbose)   echo("  Waiting for Home location");
+            // while(home_info_.point.z == -DBL_MAX){
+            //     ros::spinOnce();
+            //     loopRate.sleep();
+            // }
+            // if(verbose)   echo("  Home location received");
 
             utm_pose_.pose.position.z = -DBL_MAX;
             if(verbose)   echo("  Waiting for UTM position");
@@ -467,8 +480,8 @@ namespace state_machine{
             }
 
             mission_msg.header.stamp = ros::Time::now();
-            mission_msg.point.x = home_info_.point.x + mav_pose_.pose.pose.position.x - utm_pose_.pose.position.x;
-            mission_msg.point.y = home_info_.point.y + mav_pose_.pose.pose.position.y - utm_pose_.pose.position.y;
+            mission_msg.point.x = home_pose_.pose.position.x + mav_pose_.pose.pose.position.x - utm_pose_.pose.position.x;
+            mission_msg.point.y = home_pose_.pose.position.y + mav_pose_.pose.pose.position.y - utm_pose_.pose.position.y;
             mission_msg.point.z = hover_height;
 
             if(verbose)   echo("  Home location: x = " << mission_msg.point.x << ", y = " << mission_msg.point.y);
@@ -587,8 +600,19 @@ namespace state_machine{
 
             if(verbose)   echo("  Waiting for helipad position");
             helipad.imageID = -INT32_MAX;
+            std::chrono::steady_clock::time_point stop = std::chrono::steady_clock::now() + std::chrono::seconds((int) exit_time);
+            mav_utils_msgs::BBPose data; int imageID;
             while(helipad.imageID == -INT32_MAX){
                 ros::spinOnce();
+                if(helipad.object_poses.size() > 0) data = helipad.object_poses.at(0);
+                imageID = helipad.imageID;
+                if(std::chrono::steady_clock::now() > stop){
+                    if(verbose)     echo("Time's up!");
+                    helipad.object_poses.clear();
+                    helipad.object_poses.push_back(data);
+                    helipad.imageID = imageID;
+                    break;
+                }
                 loopRate.sleep();
             }
             if(verbose)   echo("  Received helipad position");
@@ -644,7 +668,6 @@ namespace state_machine{
             // gripper_pub_.publish(angle_msg);
 
             // if(verbose)    echo("  Servo angle set to " << angle_msg.data);
-            
             return;
         }
 
@@ -655,13 +678,13 @@ namespace state_machine{
             bool AtLoc = false;
             ros::Rate loopRate(10);
 
-            home_info_.point.z = -DBL_MAX;
-            if(verbose)   echo("  Waiting for home location");
-            while(home_info_.point.z == -DBL_MAX){
-                ros::spinOnce();
-                loopRate.sleep();
-            }
-            if(verbose)   echo("  Received home location");
+            // home_info_.point.z = -DBL_MAX;
+            // if(verbose)   echo("  Waiting for home location");
+            // while(home_info_.point.z == -DBL_MAX){
+            //     ros::spinOnce();
+            //     loopRate.sleep();
+            // }
+            // if(verbose)   echo("  Received home location");
 
             if(verbose)   echo("  Waiting for odometry");
             mav_pose_.pose.pose.position.z = -DBL_MAX;
@@ -791,7 +814,7 @@ namespace state_machine{
                 a_row<    Hover         ,  CmdDescent   ,  Descent       ,  &fsm::Descending                            >,
                   row<    Hover         ,  CmdGotoLZ    ,  ReachLZ       ,  &fsm::GotoLZ      ,  &fsm::StopMission      >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
-                a_row<    Exploring      ,  CmdHover     ,  Hover        ,  &fsm::Hovering                              >,
+                a_row<    Exploring     ,  CmdHover     ,  Hover         ,  &fsm::Hovering                              >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++
                   row<    ReachMailbox  ,  CmdHover     ,  Hover         ,  &fsm::Hovering    ,  &fsm::ReachedMailbox   >,
         // +++ ------- + -------------- + ------------- + -------------- + ------------------ + ---------------------- +++

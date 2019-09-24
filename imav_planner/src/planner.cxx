@@ -22,6 +22,7 @@ int main(int argc, char **argv)
     ph.getParam("delay/transition", transition_time);
     ph.getParam("delay/pitStop", wait_time);
     ph.getParam("delay/exit", exit_time);
+    ph.getParam("delay/landHover", land_wait);
 
     ros::Rate transitRate(1.0/transition_time);    
     state_machine::fsm_ machine;
