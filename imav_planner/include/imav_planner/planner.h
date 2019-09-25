@@ -2,6 +2,7 @@
 #include <future>
 #include <chrono>
 
+#include <GeographicLib/UTMUPS.hpp>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PointStamped.h>
 

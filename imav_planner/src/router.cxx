@@ -271,9 +271,9 @@ int main(int argc, char** argv){
         updateTable();
         updateRouters(&routerPub);
         publishTask(&taskPub);
+        if(saveGPS) saveData();
         loopRate.sleep();
     }    
 
-    if(saveGPS) saveData();
     return 0;
 }
