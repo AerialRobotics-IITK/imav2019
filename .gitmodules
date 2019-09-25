@@ -13,3 +13,9 @@
 [submodule "imav_detector/feature_detector"]
 	path = imav_detector/feature_detector
 	url = https://www.github.com/ashwin2802/feature_detector.git
+[submodule "imav_detector/aruco_ros"]
+	path = imav_detector/aruco_ros
+	url = git@github.com:ashwin2802/aruco_ros.git
+[submodule "imav_detector/aruco_detector"]
+	path = imav_detector/aruco_detector
+	url = git@github.com:ashwin2802/aruco_detector.git
