@@ -80,4 +80,16 @@ wstool update
 
 Build using either `catkin build imav2019` (requires python-catkin-tools) or `catkin_make` after cloning and initializing repository
 
+## Software Architecture
 
+### [helipad_det](https://github.com/amartyadash/helipad_det)
+
+This module detects the centre of a helipad by detecting the two circles around the 'H' by using the ratio of their radii and the 'H' itself.
+
+The image is first converted to a grayscale image which is then blurred to reduce noise. Edges are then detected in the image which is morphologically opened to remove some false detections. Contours are then extracted from this.
+
+* **Circle Detection**: Circles are detected and the ratio of the radii of the circles are matched to the expected ratio to detect accurately the circles enclosing the 'H'.
+
+* **'H' Detection**: The 'H' is detected by finding the corners and the distances between them and matching them to the expected ratio.
+
+For a more detailed description, have a look at the [wiki](https://github.com/amartyadash/helipad_det/wiki) of the repository.
