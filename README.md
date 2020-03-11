@@ -1,136 +1,99 @@
-# Installation
-* initialize workspace
-```shell
-    mkdir -p ~/catkin_ws/src
-    cd ~/catkin_ws
-    catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
-    catkin init  # initialize your catkin workspace
-    cd ~/catkin_ws/src
-    git clone git@github.com:gajena/imav2019.git
-    wstool init . ./imav2019/install/install_https.rosinstall
-    wstool update
+# imav2019
+
+A ROS package for the International Micro Air Vehicle(IMAV) Competition, an yearly international aerial vehicle competition and conference
+
+## Overview
+
+This package contains the following components:
+
+* **Planner**: A Finite State Machine implementation using the Boost C++ libraries for decision making, state transitions and actions during the mission.
+
+* **Detector**: A detection and pose estimation module to detect the colored mailboxes in the field.
+
+* **Helipad Detector**: A Helipad Detection module for accurate and precise landing on a helipad.
+
+* **Router**: A message reception, checks and feedback system for keeping track of the detected mailboxes between the UAVs. Implemented with help of the [multimaster_fkie](https://github.com/fkie/multimaster_fkie) package used to sync messages among the UAVs.
+
+* **Collision Avoidance**: A collision avoidance module for a multi-UAV system.
+
+* **Feature Detector**: A feature detection module for detection of a house roof and a crashed UAV.
+
+## Dependencies
+
+* [ROS Melodic](http://wiki.ros.org/melodic) (stable, tested) with the following packages:
+  
+  - catkin
+  
+  - roscpp
+  
+  - OpenCV
+  
+  - std_msgs
+  
+  - sensor_msgs
+  
+  - nav_msgs
+  
+  - geometry_msgs
+  
+  - message_generation (for creating and using custom messages)
+  
+  - [catkin_simple](https://github.com/catkin/catkin_simple)
+  
+  - [mavros](https://github.com/mavlink/mavros)
+  
+  - [usb_cam](https://github.com/ros-drivers/usb_cam.git) (for obtaining images from a camera connected via USB)
+  
+  - [cv_bridge](https://github.com/ros-perception/vision_opencv) (OpenCV compatibility with ROS)
+  
+  - [cmake_modules](https://github.com/ros/cmake_modules)
+  
+  - [eigen_conversions](https://github.com/ros/geometry) (Eigen compatibility with ROS)
+  
+  - [multimaster_fkie](https://github.com/fkie/multimaster_fkie) (for Syncing messages among the UAVs)
+
+* [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
+
+## Installation
+
+* Create and initialize a workspace if you have not done so already. Clone the repository and initialize the package
+
+```bash
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
+catkin init  # initialize your catkin workspace
+cd ~/catkin_ws/src
+git clone git@github.com:gajena/imav2019.git
+init . ./imav2019/install/install_https.rosinstall
+wstool update
 ```
 
+If you have a workspace, then just clone and initialize the package
 
-# Progress Tracker
+```bash
+cd <your-workspace>/src
+git clone git@github.com:gajena/imav2019.git
+init . ./imav2019/install/install_https.rosinstall
+wstool update
+```
 
-Tracking all tasks, issues and references here.
-Please mention date of completion and name of task-doer (for easy follow-up) when updating this list.
+Build using either `catkin build imav2019` (requires python-catkin-tools) or `catkin_make` after cloning and initializing repository
 
-## Current Tasks
+## Software Architecture
 
-### Immediate (HIGH PRIORITY)
-- imav_sim repository update (GN)
-- [X] **PROPOSAL**
-- [X] 4I 3D Printing
-- ~~[ ] NUC repair~~
-- [X] Budget Proposal Submission
+### [helipad_det](https://github.com/amartyadash/helipad_det)
 
-### Testing
-- [X] H-detector (TS+KK+AD)
-    - [X] Update
-    - [X] Clean
-    - [X] Push
-    - [X] Deploy
-    - [X] Floodfill - Not Applying
-    - [X] Slope Matching
-    - [X] Benchmark
-    - [X] High-speed datasets
-- [ ] Vision testing with 3D mailbox (GN+AS)
-- [ ] **Odroid benchmarking** (PM+PC)
-- [X] MPC tuning for Flamewheel (KDE+Pixhawk)
-- [X] Benchmarking vision modules with aruco
-- [X] ArUco marker based landing
-- [X] Deployment of detection module
-- [X] Mailbox preparation
-- [ ] DroneNet video recording
+This module detects the centre of a helipad by detecting the two circles around the 'H' by using the ratio of their radii and the 'H' itself.
 
-### Software
-- [ ] Avoidance (GN+PM+AS) 
-- [ ] Trajectory Generation (PM)
-- Mapping
-    - [ ] Data collection
-- Detection
-    - [X] Load params directly from camera info file
-- Multimaster
-    - [X] Eliminate GUI
-- Odroid
-    - [X] Downgrade ROS and OS
-- House detection (AS)
-    - [ ] Build model
-    - [ ] Create dataset
-- DroneNet
-    - [ ] Transform to global coordinates
+The image is first converted to a grayscale image which is then blurred to reduce noise. Edges are then detected in the image which is morphologically opened to remove some false detections. Contours are then extracted from this.
 
-### Hardware
-- [X] Odroid Setup
-- [ ] Gripper Design - Currently using Servos and most probably will use that.
+* **Circle Detection**: Circles are detected and the ratio of the radii of the circles are matched to the expected ratio to detect accurately the circles enclosing the 'H'.
 
-### Non-Technical
-- [ ] Purchases (PC+PM+AP)
-- [X] Finance update + Bills (PC+PM)
-- [ ] Sponsor Emails
-- [ ] Normal Bills
-- [X] Registration
-- [ ] Team Video Template
-- [X] NxUC payment feedback
-- [ ] List reliable purchase sources (online and local)
-- [X] DoRD $$$ (Pence)
+* **'H' Detection**: The 'H' is detected by finding the corners and the distances between them and matching them to the expected ratio.
 
-## To Buy/Get
-- [X] Antenna-based Wifi Module
-- [X] Wifi router
-- [X] eMMC Reader
-- [X] KDE Boxes
-- [X] Arduino Nano
-- [X] Jetson carrier board
-- [X] Flamewheel 450 or other frame
-- [ ] Lidar
+For a more detailed description, have a look at the [wiki](https://github.com/amartyadash/helipad_det/wiki) of the repository.
 
-## Final Adjustments
-- Detection 
-    - [X] Handling illumination variance
-    - [X] Improve thresholding
-    - [X] Size based checks on detected objects
-
-- Landing
-    - [ ] Parameters
-
-## Lectures
-- MAVLink Protocol
-- Transformations
-
-## Testing Cases
-- Blue Quad has delivered and since it has the size and capability to carry yellow package, should it go back to home base and pick up yellow package for delivery or just keep on Exploring?
-- Travel over long distances (away from Planned Mission) to go and deliver package.
-- Say red quad is detecting yellow mailbox and confirming its position and during that time yellow quad sends location of red mailbox, then the red quad should not divert from ongoing task to go and deliver the red package. Delivery should only be done from Explore state.
-- Multiple mailboxes detected in same camera-frame of one quad.
-- Red Quad's exploring is over but the red mailbox is not yet detected, then the red quad should not go and land, it should stay put in exploring mode and wait for red mailbox's location. Landing should only be done when whole mission is explored and package has been dropped.
-- Multiple Quads detect the same mailbox.
-- Battery optimization
-- Quad should not abandon current task when it receives data for some other task. It should proceed for that task after completing the ongoing task.
-- Yellow quad comes back to home base to pick up second package, optimize this task.
-- 
-
-## Issues
-
-### Unsolved
-- [ ] RTK Delay
-- [ ] Data Links
-- [ ] Servo control via PixHawk
-- [ ] TFMini feedback through PixHawk
-- [ ] Thresholding using a lot of CPU
-- [D] **Ironman crash cause** (most probably ESC Calibration)
-- [X] catkin_simple : importing custom external packages fails (CMake cannot find them)
-
-### Solved
-(Add solved issues and a reference/short description of the solution here to help in documentation later.)
-- *Going to home location when no message is published is published in offboard* : 
-    Publish current odometry before going to offboard.  
-- *USB Cam not working on Odroid with ROS Melodic and Ubuntu 18.04* :
-    Downgrade to ROS Kinetic and Ubuntu 16.04
-- [?] Eigen gives quad to global rotation matrix instead of global to quad(which is expected)
-- HSV values change everytime : switched off auto-exposure
 
 ## References
 (Maintain a list of references here that would be useful for documentation later.)
