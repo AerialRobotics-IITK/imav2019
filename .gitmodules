@@ -1,21 +1,21 @@
 [submodule "imav_detector"]
 	path = imav_detector/detector
-	url = git@github.com:ashwin2802/imav_detector.git
+	url = git@github.com:AerialRobotics-IITK/imav_detector.git
 [submodule "mav_utils_ariitk"]
 	path = mav_utils_ariitk
 	url = git@github.com:AerialRobotics-IITK/mav_utils_ariitk.git
 [submodule "imav_avoidance"]
 	path = imav_avoidance
-	url = git@github.com:gajena/imav_avoidance.git
+	url = git@github.com:AerialRobotics-IITK/imav_avoidance.git
 [submodule "imav_detector/helipad_detect"]
 	path = imav_detector/helipad_detect
 	url = git@github.com:AerialRobotics-IITK/helipad_det.git
 [submodule "imav_detector/feature_detector"]
 	path = imav_detector/feature_detector
-	url = git@github.com:ashwin2802/feature_detector.git
+	url = git@github.com:AerialRobotics-IITK/feature_detector.git
 [submodule "imav_detector/aruco_ros"]
 	path = imav_detector/aruco_ros
-	url = git@github.com:ashwin2802/aruco_ros.git
+	url = git@github.com:pal-robotics/aruco_ros.git
 [submodule "imav_detector/aruco_detector"]
 	path = imav_detector/aruco_detector
-	url = git@github.com:ashwin2802/aruco_detector.git
+	url = git@github.com:AerialRobotics-IITK/aruco_detector.git
