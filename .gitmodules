@@ -1,4 +1,4 @@
-[submodule "imav_detector"]
+[submodule "imav_detector/detector"]
 	path = imav_detector/detector
 	url = git@github.com:AerialRobotics-IITK/imav_detector.git
 [submodule "mav_utils_ariitk"]
